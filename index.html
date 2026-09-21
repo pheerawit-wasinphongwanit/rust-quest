@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦀 RustQuest — ทบทวน Rust ผ่านเกม</title>
+<style>
+  :root {
+    --bg: #0d1117; --bg-soft: #161b22; --bg-card: #10151c;
+    --border: #30363d; --text: #e6edf3; --text-dim: #9da7b3; --text-faint: #6e7681;
+    --accent: #f78166; --accent-soft: rgba(247,129,102,.12);
+    --amber: #e3b341; --green: #7ee787; --blue: #79c0ff; --purple: #d2a8ff; --cyan: #56d4dd; --red: #ff7b72;
+    --mono: ui-monospace, "Cascadia Code", "SF Mono", Consolas, monospace;
+    --sans: "Sarabun", "Noto Sans Thai", "IBM Plex Sans Thai", "Leelawadee UI", -apple-system, "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); font-size: 17px; line-height: 1.8; }
+  a { color: var(--blue); text-decoration: none; }
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* HUD */
+  #hud { position: sticky; top: 0; z-index: 50; background: rgba(13,17,23,.95); border-bottom: 1px solid var(--border);
+         padding: 8px 20px; display: flex; gap: 14px; align-items: center; font-family: var(--mono); font-size: 13px; color: var(--text-dim); }
+  #hud .xp { color: var(--amber); font-weight: 700; }
+  #hud .streak { color: var(--accent); }
+  #hud .stars { color: var(--amber); }
+  #hud .spacer { flex: 1; }
+
+  /* Home */
+  .hero { padding: 54px 20px 40px; text-align: center;
+    background: radial-gradient(900px 300px at 50% -10%, rgba(247,129,102,.16), transparent 60%), var(--bg); }
+  .hero .crab { font-size: 58px; line-height: 1; }
+  .hero h1 { font-size: clamp(28px, 6vw, 42px); margin: 10px 0 4px; font-weight: 800; }
+  .hero h1 .q { color: var(--accent); }
+  .hero p { color: var(--text-dim); max-width: 620px; margin: 6px auto 0; }
+  .mode-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 30px; }
+  .mode-card { flex: 1 1 220px; max-width: 100%; min-width: 200px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 24px 22px; cursor: pointer;
+               transition: transform .15s, border-color .15s; text-align: left; position: relative; }
+  .mode-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+  .mode-card.locked { opacity: .55; cursor: not-allowed; }
+  .mode-card.locked:hover { transform: none; border-color: var(--border); }
+  .mode-card .ico { font-size: 34px; }
+  .mode-card h3 { margin: 10px 0 4px; font-size: 19px; }
+  .mode-card p { margin: 0; color: var(--text-dim); font-size: 14.5px; }
+  .mode-card .soon { font-family: var(--mono); font-size: 11px; color: var(--amber); border: 1px dashed rgba(227,179,65,.5);
+                     border-radius: 999px; padding: 2px 10px; position: absolute; top: 14px; right: 14px; }
+  .home-foot { text-align: center; color: var(--text-faint); font-size: 13px; margin-top: 44px; font-family: var(--mono); }
+
+  /* Level map */
+  .lvl-list { display: flex; flex-direction: column; gap: 12px; margin-top: 26px; }
+  .lvl-row { display: flex; align-items: center; gap: 16px; background: var(--bg-soft); border: 1px solid var(--border);
+             border-radius: 14px; padding: 16px 20px; cursor: pointer; }
+  .lvl-row:hover { border-color: var(--accent); }
+  .lvl-row.locked { opacity: .5; cursor: not-allowed; }
+  .lvl-row.locked:hover { border-color: var(--border); }
+  .lvl-num { font-family: var(--mono); font-weight: 700; color: var(--accent); background: var(--accent-soft);
+             border-radius: 10px; padding: 6px 12px; font-size: 15px; white-space: nowrap; }
+  .lvl-row .info { flex: 1; min-width: 0; }
+  .lvl-row h3 { margin: 0; font-size: 16.5px; }
+  .lvl-row p { margin: 2px 0 0; font-size: 13.5px; color: var(--text-dim); }
+  .lvl-stars { color: var(--amber); font-size: 15px; letter-spacing: 2px; white-space: nowrap; }
+  .lvl-lock { font-size: 18px; }
+  .back-btn, .btn { display: inline-block; font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--text);
+       background: var(--bg-soft); border: 1px solid var(--border); border-radius: 10px; padding: 9px 20px; cursor: pointer; }
+  .btn:hover { border-color: var(--text-faint); }
+  .btn.primary { background: var(--accent-soft); border-color: rgba(247,129,102,.5); color: var(--accent); }
+  .btn.primary:hover { background: rgba(247,129,102,.22); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Quiz */
+  .q-head { margin-top: 26px; }
+  .q-progress { display: flex; gap: 6px; margin-bottom: 10px; }
+  .q-dot { width: 100%; height: 5px; border-radius: 3px; background: var(--border); }
+  .q-dot.now { background: var(--accent); }
+  .q-dot.ok { background: var(--green); }
+  .q-dot.bad { background: var(--red); }
+  .q-meta { font-family: var(--mono); font-size: 12px; color: var(--text-faint); display: flex; gap: 10px; align-items: center; }
+  .q-meta .cat { color: var(--cyan); }
+  .q-meta .diff { color: var(--amber); }
+  .q-meta .streak-live { color: var(--accent); font-weight: 700; }
+  .q-card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 24px 26px; margin-top: 12px; }
+  .q-prompt { font-size: 17.5px; font-weight: 600; line-height: 1.75; }
+  .q-prompt code, .explain code, .fb code { background: rgba(110,118,129,.18); border-radius: 5px; padding: 1px 7px;
+      font-size: .87em; color: var(--cyan); font-family: var(--mono); }
+  .code-card { margin: 14px 0 4px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: #0a0d12; }
+  .code-head { display: flex; justify-content: space-between; padding: 5px 14px; background: #12171e; border-bottom: 1px solid var(--border);
+      font-family: var(--mono); font-size: 11.5px; color: var(--text-faint); }
+  pre { margin: 0; padding: 13px 16px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.7; }
+  code { font-family: var(--mono); }
+  .tk-kw{color:#ff7b72}.tk-ty{color:#79c0ff}.tk-fn{color:#d2a8ff}.tk-str{color:#a5d6ff}.tk-num{color:#79c0ff}
+  .tk-cm{color:#8b949e;font-style:italic}.tk-attr{color:#d2a8ff}.tk-macro{color:#56d4dd}
+
+  .choices { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+  .choice { display: flex; gap: 12px; align-items: baseline; text-align: left; font-family: var(--sans); font-size: 15.5px;
+            color: var(--text); background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 12px 16px; cursor: pointer; line-height: 1.6; }
+  .choice:hover:not(:disabled) { border-color: var(--accent); }
+  .choice .k { font-family: var(--mono); color: var(--text-faint); font-size: 12.5px; min-width: 18px; }
+  .choice.correct { border-color: var(--green); background: rgba(126,231,135,.12); }
+  .choice.wrong { border-color: var(--red); background: rgba(255,123,114,.10); }
+  .choice:disabled { cursor: default; }
+  .choice .mono, .choice.mono { font-family: var(--mono); font-size: 14px; }
+
+  /* fill */
+  .blank-slot { display: inline-block; min-width: 90px; text-align: center; background: rgba(227,179,65,.15);
+    border-bottom: 2px solid var(--amber); border-radius: 6px; color: var(--amber); font-weight: 700; padding: 0 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .chip { font-family: var(--mono); font-size: 14.5px; color: var(--cyan); background: var(--bg-card);
+          border: 1px solid var(--border); border-radius: 999px; padding: 7px 18px; cursor: pointer; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.used { opacity: .35; cursor: default; }
+  .chip.correct { border-color: var(--green); color: var(--green); }
+  .chip.wrong { border-color: var(--red); color: var(--red); }
+
+  /* order */
+  .ord-answer { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; min-height: 60px;
+      border: 1px dashed var(--border); border-radius: 12px; padding: 12px; background: rgba(110,118,129,.05); }
+  .ord-line { font-family: var(--mono); font-size: 13.5px; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+  .ord-line .n { color: var(--text-faint); margin-right: 10px; }
+  .ord-line:hover { border-color: var(--accent); }
+  .ord-line.ok { border-color: var(--green); }
+  .ord-line.bad { border-color: var(--red); }
+  .ord-pool { margin-top: 14px; }
+
+  /* memory svg */
+  .mem-box { margin-top: 14px; border: 1px solid var(--border); border-radius: 12px; background: #0a0d12; padding: 12px; }
+  .mem-box svg { width: 100%; height: auto; display: block; }
+
+  /* feedback */
+  .fb { border-radius: 14px; padding: 16px 20px; margin-top: 18px; display: none; }
+  .fb.show { display: block; animation: pop .25s ease; }
+  @keyframes pop { 0% { transform: scale(.97); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .fb.good { border: 1px solid rgba(126,231,135,.5); background: rgba(126,231,135,.08); }
+  .fb.bad { border: 1px solid rgba(255,123,114,.5); background: rgba(255,123,114,.07); }
+  .fb .verdict { font-weight: 800; font-size: 17px; }
+  .fb.good .verdict { color: var(--green); }
+  .fb.bad .verdict { color: var(--red); }
+  .fb .xpgain { color: var(--amber); font-family: var(--mono); font-size: 13.5px; }
+  .explain { margin-top: 10px; font-size: 15.5px; color: var(--text-dim); }
+  .explain b { color: var(--text); }
+  .src { margin-top: 12px; font-family: var(--mono); font-size: 12px; color: var(--text-faint); border-top: 1px dashed var(--border); padding-top: 8px; }
+  .next-row { display: flex; justify-content: flex-end; gap: 12px; margin-top: 18px; }
+
+  /* result */
+  .result { text-align: center; padding-top: 40px; }
+  .result .big { font-size: 56px; }
+  .stars-big { font-size: 44px; letter-spacing: 6px; margin: 8px 0; }
+  .stars-big .off { opacity: .22; }
+  .result h2 { margin: 6px 0 2px; }
+  .result .sub { color: var(--text-dim); }
+  .review-list { margin-top: 28px; text-align: left; }
+  .review-item { display: flex; gap: 12px; align-items: baseline; background: var(--bg-soft); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 16px; margin: 8px 0; font-size: 14.5px; color: var(--text-dim); }
+  .review-item .mark { font-weight: 700; }
+  .review-item .mark.ok { color: var(--green); }
+  .review-item .mark.bad { color: var(--red); }
+
+  .toast { position: fixed; left: 50%; top: 76px; transform: translateX(-50%); background: var(--bg-soft);
+      border: 1px solid var(--border); border-radius: 999px; padding: 8px 22px; font-size: 14.5px; z-index: 99;
+      opacity: 0; pointer-events: none; transition: opacity .25s, top .25s; }
+  .toast.show { opacity: 1; top: 84px; }
+
+  @media (max-width: 560px) {
+    body { font-size: 16px; }
+    .q-card { padding: 18px 16px; }
+    .choice { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="hud" style="display:none">
+  <button class="btn" id="hud-home" style="padding:4px 12px;font-size:13px">🏠</button>
+  <span class="xp" id="hud-xp">XP 0</span>
+  <span class="stars" id="hud-stars"></span>
+  <span class="spacer"></span>
+  <span class="streak" id="hud-streak"></span>
+</div>
+
+<!-- ============ HOME ============ -->
+<section class="screen active" id="screen-home">
+  <div class="hero">
+    <div class="crab">🦀</div>
+    <h1>Rust<span class="q">Quest</span></h1>
+    <p>ทบทวน Rust ผ่านเกม — syntax ที่ใช้บ่อย · pattern จาก code review จริงของ Goose · และโครงสร้างข้อมูลในหน่วยความจำตอนโปรแกรมทำงาน</p>
+    <div class="mode-grid">
+      <div class="mode-card" id="go-campaign">
+        <div class="ico">🗺️</div>
+        <h3>ภารกิจ (Campaign)</h3>
+        <p>ไล่ด่านตามหมวด ง่าย→ยาก เก็บดาวและ XP</p>
+      </div>
+      <div class="mode-card locked">
+        <div class="ico">🧠</div>
+        <h3>Memory Lab</h3>
+        <p>ดู stack/heap มีชีวิตตอนโค้ดรันทีละบรรทัด</p>
+        <span class="soon">เร็ว ๆ นี้ · M3</span>
+      </div>
+      <div class="mode-card locked">
+        <div class="ico">⚔️</div>
+        <h3>Boss Rush</h3>
+        <p>จับเวลา สุ่มรวมทุกหมวด streak คูณคะแนน</p>
+        <span class="soon">เร็ว ๆ นี้ · M2</span>
+      </div>
+    </div>
+    <div class="home-foot" id="home-foot">v0.1.0-M1 · แหล่งเนื้อหา: Rust Cookbook · Goose code review · เล่นออฟไลน์ได้ · เก็บความคืบหน้าในเครื่อง</div>
+  </div>
+</section>
+
+<!-- ============ LEVELS ============ -->
+<section class="screen" id="screen-levels">
+  <div class="wrap">
+    <div style="margin-top:26px; display:flex; align-items:center; gap:14px;">
+      <button class="btn" id="lv-back">← หน้าแรก</button>
+      <h2 style="margin:0;">🗺️ เลือกด่าน</h2>
+    </div>
+    <div class="lvl-list" id="lvl-list"></div>
+  </div>
+</section>
+
+<!-- ============ QUIZ ============ -->
+<section class="screen" id="screen-quiz">
+  <div class="wrap">
+    <div class="q-head">
+      <div class="q-progress" id="q-progress"></div>
+      <div class="q-meta">
+        <span id="q-count"></span>
+        <span class="cat" id="q-cat"></span>
+        <span class="diff" id="q-diff"></span>
+        <span class="streak-live" id="q-streak"></span>
+      </div>
+    </div>
+    <div class="q-card" id="q-card"></div>
+    <div class="fb" id="fb">
+      <div class="verdict" id="fb-verdict"></div>
+      <div class="xpgain" id="fb-xp"></div>
+      <div class="explain" id="fb-explain"></div>
+      <div class="src" id="fb-src"></div>
+    </div>
+    <div class="next-row">
+      <button class="btn" id="btn-quit">ออก</button>
+      <button class="btn primary" id="btn-next" style="display:none">ถัดไป →</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ RESULT ============ -->
+<section class="screen" id="screen-result">
+  <div class="wrap result">
+    <div class="big" id="res-emoji">🏆</div>
+    <div class="stars-big" id="res-stars"></div>
+    <h2 id="res-title"></h2>
+    <p class="sub" id="res-sub"></p>
+    <div class="review-list" id="res-review"></div>
+    <div style="margin-top:26px; display:flex; gap:12px; justify-content:center;">
+      <button class="btn" id="res-back">← แผนที่ด่าน</button>
+      <button class="btn primary" id="res-retry">🔁 เล่นด่านนี้อีกครั้ง</button>
+    </div>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="src/questions.js"></script>
+<script>
+(function () {
+  "use strict";
+  var QS = window.RQ_QUESTIONS || [];
+  var LEVELS = window.RQ_LEVELS || [];
+  var QMAP = {};
+  QS.forEach(function (q) { QMAP[q.id] = q; });
+
+  // ---------- save ----------
+  var KEY = "rustquest.save.v1";
+  function loadSave() {
+    try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.xp !== undefined) return s; } catch (e) {}
+    return { xp: 0, streakBest: 0, levels: {}, qstats: {} };
+  }
+  function persist() { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} }
+  var SAVE = loadSave();
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    $(id).classList.add("active");
+    $("hud").style.display = (id === "screen-home") ? "none" : "flex";
+    window.scrollTo(0, 0);
+    refreshHud();
+  }
+  function toast(msg) {
+    var t = $("toast"); t.textContent = msg; t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 1600);
+  }
+  function refreshHud() {
+    $("hud-xp").textContent = "XP " + SAVE.xp;
+    var stars = 0; Object.keys(SAVE.levels).forEach(function (k) { if (SAVE.levels[k].stars) stars += SAVE.levels[k].stars; });
+    $("hud-stars").textContent = stars ? "★" + stars : "";
+    $("hud-streak").textContent = SAVE.streakBest ? ("🔥 best " + SAVE.streakBest) : "";
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+  // ---------- rust syntax highlight (same family as goose docs) ----------
+  var KW = ["async","await","break","const","continue","crate","dyn","else","enum","extern","false","fn","for","if","impl","in","let","loop","match","mod","move","mut","pub","ref","return","self","static","struct","super","trait","true","type","unsafe","use","where","while","as"];
+  var TY = ["Result","Option","Some","None","Ok","Err","String","Vec","Box","Arc","Mutex","Formatter","Self","Send","Sync"];
+  function hl(code) {
+    var out = "", i = 0;
+    var re = /(\/\/[^\n]*)|("(?:[^"\\]|\\.)*")|(#\[[^\]]*\])|\b([A-Za-z_][A-Za-z0-9_]*)!\b|\b(fn)\s+([A-Za-z_][A-Za-z0-9_]*)|\b([A-Za-z_][A-Za-z0-9_]*)\s*(?=\()|\b(\d[\d_]*)\b/g, m;
+    while ((m = re.exec(code)) !== null) {
+      out += esc(code.slice(i, m.index));
+      if (m[1]) out += '<span class="tk-cm">' + esc(m[1]) + "</span>";
+      else if (m[2]) out += '<span class="tk-str">' + esc(m[2]) + "</span>";
+      else if (m[3]) out += '<span class="tk-attr">' + esc(m[3]) + "</span>";
+      else if (m[4]) out += '<span class="tk-macro">' + esc(m[4]) + "</span>";
+      else if (m[5]) out += '<span class="tk-kw">' + m[5] + "</span> " + '<span class="tk-fn">' + esc(m[6]) + "</span>";
+      else if (m[7]) {
+        var w = m[7];
+        if (KW.indexOf(w) >= 0) out += '<span class="tk-kw">' + esc(w) + "</span>";
+        else if (TY.indexOf(w) >= 0 || /^[A-Z]/.test(w)) out += '<span class="tk-ty">' + esc(w) + "</span>";
+        else out += '<span class="tk-fn">' + esc(w) + "</span>";
+      } else if (m[8]) out += '<span class="tk-num">' + esc(m[8]) + "</span>";
+      i = re.lastIndex;
+    }
+    return out + esc(code.slice(i));
+  }
+  function codeCard(code, label) {
+    return '<div class="code-card"><div class="code-head"><span>' + esc(label || "rust") +
+      '</span><span>RUST</span></div><pre><code>' + hl(code) + "</code></pre></div>";
+  }
+
+  // ---------- memory SVG builders ----------
+  var MEM_SVG = {
+    mem1: '<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace">' +
+      '<defs><marker id="arr" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L9,3 L0,6 Z" fill="#f78166"/></marker></defs>' +
+      '<rect x="20" y="30" width="270" height="240" rx="12" fill="#12181f" stroke="#79c0ff" stroke-opacity=".55"/>' +
+      '<text x="35" y="58" fill="#79c0ff" font-size="15">STACK · เฟรมของ main</text>' +
+      '<rect x="45" y="80" width="220" height="42" rx="8" fill="#0d1117" stroke="#30363d"/>' +
+      '<text x="60" y="107" fill="#e6edf3" font-size="14">n = 42</text>' +
+      '<rect x="45" y="134" width="220" height="42" rx="8" fill="#0d1117" stroke="#30363d"/>' +
+      '<text x="60" y="161" fill="#e6edf3" font-size="14">s ─ ptr ▸</text>' +
+      '<rect x="45" y="184" width="220" height="34" rx="8" fill="#0d1117" stroke="#30363d"/>' +
+      '<text x="60" y="207" fill="#9da7b3" font-size="13">  len = 18 · cap = 18</text>' +
+      '<rect x="350" y="80" width="270" height="130" rx="12" fill="#12181f" stroke="#f78166" stroke-opacity=".6"/>' +
+      '<text x="365" y="108" fill="#f78166" font-size="15">HEAP</text>' +
+      '<text x="365" y="132" fill="#9da7b3" font-size="13">bytes ของ String</text>' +
+      '<g font-size="14" fill="#e6edf3">' +
+      '<rect x="365" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="372" y="166">ส</text>' +
+      '<rect x="404" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="411" y="166">ว</text>' +
+      '<rect x="443" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="450" y="166">ั</text>' +
+      '<rect x="482" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="489" y="166">ส</text>' +
+      '<rect x="521" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="528" y="166">ด</text>' +
+      '<rect x="560" y="145" width="36" height="30" rx="4" fill="#0d1117" stroke="#30363d"/><text x="567" y="166">ี</text>' +
+      '</g>' +
+      '<line x1="268" y1="155" x2="360" y2="160" stroke="#f78166" stroke-width="2" marker-end="url(#arr)"/>' +
+      '<text x="30" y="292" fill="#6e7681" font-size="12">หมายเหตุ: ภาษาไทยแต่ละอักษร = 3 bytes (UTF-8) · 6 อักษร = 18 bytes</text>' +
+      '</svg>'
+  };
+
+  // ---------- quiz engine ----------
+  var run = null; // current level run
+
+  function starsFor(total, correct) {
+    var miss = total - correct;
+    if (miss <= 1) return 3;
+    if (miss <= Math.ceil(total * 0.25)) return 2;
+    if (correct >= Math.ceil(total * 0.6)) return 1;
+    return 0;
+  }
+  function xpFor(diff, streak) {
+    var mult = Math.min(1 + streak * 0.1, 2);
+    return Math.round(10 * diff * mult);
+  }
+
+  function startLevel(lvl) {
+    run = { lvl: lvl, qids: lvl.questions.slice(), idx: -1, correct: 0, streak: 0, xpGained: 0, perQ: [] };
+    show("screen-quiz");
+    nextQuestion();
+  }
+
+  function nextQuestion() {
+    run.idx++;
+    if (run.idx >= run.qids.length) { finishLevel(); return; }
+    var q = QMAP[run.qids[run.idx]];
+    renderProgress();
+    $("q-count").textContent = "ข้อ " + (run.idx + 1) + "/" + run.qids.length;
+    $("q-cat").textContent = catName(q.cat);
+    $("q-diff").textContent = "●".repeat(q.diff) + "○".repeat(3 - q.diff);
+    $("q-streak").textContent = run.streak >= 2 ? ("🔥 streak ×" + run.streak) : "";
+    $("fb").className = "fb";
+    $("btn-next").style.display = "none";
+    renderQuestion(q);
+  }
+
+  function catName(c) {
+    return { syntax: "ไวยากรณ์/มาตรฐาน", goose: "Goose pattern", memory: "หน่วยความจำ/ownership" }[c] || c;
+  }
+
+  function renderProgress() {
+    var el = $("q-progress"); el.innerHTML = "";
+    run.qids.forEach(function (_, i) {
+      var d = document.createElement("div");
+      d.className = "q-dot" + (i < run.idx ? (run.perQ[i] ? " ok" : " bad") : (i === run.idx ? " now" : ""));
+      el.appendChild(d);
+    });
+  }
+
+  function renderQuestion(q) {
+    var card = $("q-card"); card.innerHTML = "";
+    var html = '<div class="q-prompt">' + q.prompt + "</div>";
+    if (q.type === "output" || q.type === "bug") html += codeCard(q.payload.code, q.type === "bug" ? "โค้ดที่มีบั๊ก" : "โปรแกรม");
+    if (q.type === "memory" && MEM_SVG[q.payload.svg]) html += '<div class="mem-box">' + MEM_SVG[q.payload.svg] + "</div>";
+    card.innerHTML = html;
+
+    if (q.type === "mcq" || q.type === "output" || q.type === "bug" || q.type === "memory") renderChoices(q, card);
+    else if (q.type === "fill") renderFill(q, card);
+    else if (q.type === "order") renderOrder(q, card);
+  }
+
+  var KEYS = ["1", "2", "3", "4"];
+
+  function renderChoices(q, card) {
+    var wrap = document.createElement("div"); wrap.className = "choices";
+    var isMono = q.type === "output";
+    q.payload.choices.forEach(function (c, i) {
+      var b = document.createElement("button");
+      b.className = "choice" + (isMono ? " mono" : "");
+      b.innerHTML = '<span class="k">' + KEYS[i] + "</span><span>" + esc(c) + "</span>";
+      b.onclick = function () { answer(q, i, [b]); };
+      wrap.appendChild(b);
+    });
+    card.appendChild(wrap);
+  }
+
+  function renderFill(q, card) {
+    var wrap = document.createElement("div");
+    var code = esc(q.payload.code).replace("___", '<span class="blank-slot" id="blank-slot">?</span>');
+    wrap.innerHTML = '<div class="code-card"><div class="code-head"><span>เติมคำ</span><span>RUST</span></div><pre><code>' + code + "</code></pre></div>";
+    var chips = document.createElement("div"); chips.className = "chips";
+    q.payload.choices.forEach(function (c, i) {
+      var b = document.createElement("button");
+      b.className = "chip"; b.textContent = c;
+      b.onclick = function () {
+        $("blank-slot").textContent = c;
+        answer(q, i, [b], { chips: chips, word: c });
+      };
+      chips.appendChild(b);
+    });
+    wrap.appendChild(chips);
+    card.appendChild(wrap);
+  }
+
+  function renderOrder(q, card) {
+    var wrap = document.createElement("div");
+    wrap.innerHTML = '<div class="ord-answer" id="ord-answer"></div><div class="ord-pool" id="ord-pool"></div>';
+    var pool = [], picked = [];
+    q.payload.lines.forEach(function (_, i) { pool.push(i); });
+    // deterministic-ish shuffle that never starts solved
+    do { pool.sort(function () { return Math.random() - 0.5; }); }
+    while (pool.every(function (v, i) { return v === q.payload.answer[i]; }));
+
+    function draw() {
+      var ans = $("ord-answer"); ans.innerHTML = "";
+      picked.forEach(function (pi, slot) {
+        var d = document.createElement("div"); d.className = "ord-line";
+        d.innerHTML = '<span class="n">' + (slot + 1) + ".</span>" + esc(q.payload.lines[pi]);
+        d.onclick = function () { picked.splice(slot, 1); pool.push(pi); draw(); };
+        ans.appendChild(d);
+      });
+      var pl = $("ord-pool"); pl.innerHTML = "";
+      pool.forEach(function (pi) {
+        var d = document.createElement("div"); d.className = "ord-line";
+        d.innerHTML = esc(q.payload.lines[pi]);
+        d.onclick = function () {
+          pool.splice(pool.indexOf(pi), 1); picked.push(pi); draw();
+          if (picked.length === q.payload.lines.length) {
+            var ok = picked.every(function (v, i) { return v === q.payload.answer[i]; });
+            answer(q, ok ? 1 : 0, [], { orderPicked: picked.slice() });
+          }
+        };
+        pl.appendChild(d);
+      });
+    }
+    card.appendChild(wrap);
+    draw();
+  }
+
+  function answer(q, chosen, btns, extra) {
+    extra = extra || {};
+    var correct = (q.type === "order") ? (chosen === 1) : (chosen === q.payload.answer);
+    // lock UI
+    var allBtns = ($("q-card").querySelectorAll(".choice, .chip, .ord-line") || []);
+    allBtns.forEach(function (b) { b.disabled = true; b.style.pointerEvents = "none"; });
+    if (q.type === "mcq" || q.type === "output" || q.type === "bug" || q.type === "memory") {
+      btns.forEach(function (b, i) {
+        if (i === q.payload.answer) b.classList.add("correct");
+        else if (i === chosen) b.classList.add("wrong");
+      });
+    } else if (q.type === "fill") {
+      extra.chips.querySelectorAll(".chip").forEach(function (b, i) {
+        if (i === q.payload.answer) b.classList.add("correct");
+        else if (i === chosen) b.classList.add("wrong");
+      });
+      var slot = $("blank-slot");
+      if (slot) { slot.textContent = q.payload.choices[q.payload.answer]; slot.style.color = "var(--green)"; }
+    } else if (q.type === "order") {
+      var lines = $("ord-answer").querySelectorAll(".ord-line");
+      lines.forEach(function (d, i) {
+        var ok = pickedCorrectAt(q, extra.orderPicked, i);
+        d.classList.add(ok ? "ok" : "bad");
+      });
+      // show correct order under explanation
+      var sol = document.createElement("div"); sol.className = "ord-answer";
+      sol.style.opacity = ".8";
+      q.payload.answer.forEach(function (pi, i) {
+        var d = document.createElement("div"); d.className = "ord-line ok";
+        d.innerHTML = '<span class="n">' + (i + 1) + ".</span>" + esc(q.payload.lines[pi]);
+        sol.appendChild(d);
+      });
+      $("q-card").appendChild(sol);
+    }
+
+    // stats & xp
+    var gained = 0;
+    if (correct) {
+      run.streak++;
+      gained = xpFor(q.diff, run.streak - 1);
+      run.correct++; run.xpGained += gained;
+      SAVE.xp += gained;
+      if (run.streak > SAVE.streakBest) SAVE.streakBest = run.streak;
+    } else { run.streak = 0; }
+    var st = SAVE.qstats[q.id] || { seen: 0, wrong: 0 };
+    st.seen++; if (!correct) st.wrong++;
+    SAVE.qstats[q.id] = st;
+    persist();
+    run.perQ[run.idx] = correct;
+
+    // feedback
+    var fb = $("fb");
+    fb.className = "fb show " + (correct ? "good" : "bad");
+    $("fb-verdict").textContent = correct ? "✅ ถูกต้อง!" : "❌ ยังไม่ใช่ — คำตอบที่ถูก: " + shortAnswer(q);
+    $("fb-xp").textContent = correct ? ("+" + gained + " XP" + (run.streak >= 2 ? "  ·  🔥 streak " + run.streak : "")) : "streak รีเซ็ต";
+    $("fb-explain").innerHTML = q.explain;
+    $("fb-src").textContent = "📚 " + q.source;
+    $("btn-next").style.display = "inline-block";
+    $("btn-next").textContent = (run.idx === run.qids.length - 1) ? "ดูผล →" : "ถัดไป →";
+    $("btn-next").focus();
+    refreshHud();
+  }
+
+  function pickedCorrectAt(q, picked, i) { return picked[i] === q.payload.answer[i]; }
+  function shortAnswer(q) {
+    if (q.type === "order") return "ดูลำดับที่ถูกด้านล่าง";
+    if (q.type === "fill") return q.payload.choices[q.payload.answer];
+    return q.payload.choices[q.payload.answer];
+  }
+
+  function finishLevel() {
+    var total = run.qids.length, correct = run.correct;
+    var stars = starsFor(total, correct);
+    var prev = SAVE.levels[run.lvl.id] || { stars: 0, bestScore: 0 };
+    SAVE.levels[run.lvl.id] = {
+      stars: Math.max(prev.stars, stars),
+      bestScore: Math.max(prev.bestScore, correct)
+    };
+    persist();
+    $("res-emoji").textContent = stars === 3 ? "🏆" : stars === 2 ? "🎉" : stars === 1 ? "👍" : "💪";
+    $("res-stars").innerHTML = [1, 2, 3].map(function (i) {
+      return '<span class="' + (i <= stars ? "" : "off") + '">★</span>';
+    }).join("");
+    $("res-title").textContent = stars === 0 ? "เกือบแล้ว! ลองอีกครั้งนะ" : "ผ่านด่าน! ได้ " + stars + " ดาว";
+    $("res-sub").textContent = "ตอบถูก " + correct + "/" + total + " ข้อ · ได้ XP รวม +" + run.xpGained +
+      (stars === 3 ? " · สมบูรณ์แบบ!" : stars < 3 ? " · พลาดไม่เกิน 1 ข้อเพื่อรับ 3 ดาว" : "");
+    var rev = $("res-review"); rev.innerHTML = "";
+    run.qids.forEach(function (qid, i) {
+      var q = QMAP[qid];
+      var d = document.createElement("div"); d.className = "review-item";
+      d.innerHTML = '<span class="mark ' + (run.perQ[i] ? "ok" : "bad") + '">' + (run.perQ[i] ? "✓" : "✗") +
+        "</span><span>" + esc(q.prompt.replace(/<[^>]*>/g, "").slice(0, 80)) + "</span>";
+      rev.appendChild(d);
+    });
+    show("screen-result");
+  }
+
+  // ---------- levels screen ----------
+  function unlocked(lvl) {
+    if (!lvl.unlock) return true;
+    var prev = SAVE.levels[lvl.unlock];
+    return !!(prev && prev.stars >= 1);
+  }
+  function renderLevels() {
+    var list = $("lvl-list"); list.innerHTML = "";
+    LEVELS.forEach(function (lvl) {
+      var ok = unlocked(lvl) && lvl.questions.length > 0;
+      var rec = SAVE.levels[lvl.id];
+      var row = document.createElement("div");
+      row.className = "lvl-row" + (ok ? "" : " locked");
+      var starsHtml = rec && rec.stars
+        ? '<span class="lvl-stars">' + [1,2,3].map(function (i) { return i <= rec.stars ? "★" : "☆"; }).join("") + "</span>"
+        : (ok ? '<span class="lvl-stars" style="opacity:.35">☆☆☆</span>' : '<span class="lvl-lock">🔒</span>');
+      row.innerHTML = '<span class="lvl-num">' + esc(lvl.id.replace("lvl", "L")) + '</span>' +
+        '<div class="info"><h3>' + esc(lvl.title) + "</h3><p>" + esc(lvl.desc) +
+        (lvl.questions.length ? " · " + lvl.questions.length + " ข้อ" : " · เร็ว ๆ นี้") + "</p></div>" + starsHtml;
+      if (ok) row.onclick = function () { startLevel(lvl); };
+      list.appendChild(row);
+    });
+  }
+
+  // ---------- wiring ----------
+  $("go-campaign").onclick = function () { renderLevels(); show("screen-levels"); };
+  $("lv-back").onclick = function () { show("screen-home"); };
+  $("hud-home").onclick = function () { renderLevels(); show("screen-home"); };
+  $("btn-quit").onclick = function () { renderLevels(); show("screen-levels"); toast("ออกจากด่าน (ความคืบหน้าข้อนี้ไม่ถูกบันทึก)"); };
+  $("btn-next").onclick = nextQuestion;
+  $("res-back").onclick = function () { renderLevels(); show("screen-levels"); };
+  $("res-retry").onclick = function () { startLevel(run.lvl); };
+
+  document.addEventListener("keydown", function (e) {
+    if (!document.querySelector("#screen-quiz.active")) return;
+    if (["1", "2", "3", "4"].indexOf(e.key) >= 0) {
+      var btns = $("q-card").querySelectorAll(".choice:not([disabled])");
+      var i = KEYS.indexOf(e.key);
+      if (btns[i]) btns[i].click();
+    } else if (e.key === "Enter" && $("btn-next").style.display !== "none") {
+      nextQuestion();
+    }
+  });
+
+  refreshHud();
+  if (!QS.length) {
+    document.querySelector(".hero p").innerHTML = "⚠️ โหลดคลังคำถามไม่สำเร็จ (เปิดผ่าน <code>index.html</code> ใน repo หรือใช้ไฟล์ <code>dist/rust-quest.html</code>)";
+  }
+})();
+</script>
+</body>
+</html>
