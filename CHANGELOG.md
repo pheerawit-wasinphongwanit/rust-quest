@@ -25,3 +25,11 @@
 - Mini-quiz ท้ายฉาก (ดึงจาก bank เดิม) — ตอบถูกเก็บฉาก บันทึกใน SAVE.lab, หน้าแรกแสดงความคืบหน้า x/7
 - build.mjs: inline ทุก <script src="src/..."> (questions + memorylab) → dist 193.9 KB
 - smoke-test ขยายครอบ lab 7 ฉาก (PASS), render QC ผ่าน (SVG panel + arrows)
+
+## 0.4.0 — M4 (2026-09-22)
+
+- **Mascot AI-art 3 ท่า** (สไตล์ A flat cartoon — default ตามมติ รอเลือกสไตล์จริง): hello/cheer/encourage — ครอป+ย่อ 256px JPEG (38KB รวม) inline เป็น data URI · tools/make-mascots.py สร้างใหม่ได้
+- **Smart review queue**: การ์ด "ทบทวนข้อที่พลาด" — hotlist 12 ข้อที่ผิดบ่อยสุด (จัดอันดับด้วย wrong/seen)
+- **จอสถิติ**: XP/ดาว/streak/Boss/Lab + ความแม่นยำรวม-แยกหมวด + ความคืบหน้าด่าน
+- แก้ ES5-compat: NodeList.forEach → qsa() helper, String.repeat → rep() (WebKit เก่ารันได้ครบ)
+- QC: smoke-test ครอบ review+stats (PASS) · render QC 5 จอ แยกลายเฉพาะ ผ่านครบ (พบและแก้ false-positive ของ detector รุ่นก่อน)

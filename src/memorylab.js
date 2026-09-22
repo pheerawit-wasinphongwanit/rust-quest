@@ -389,7 +389,9 @@
 
   function quizAnswer(q, chosen, btn, wrap, stat) {
     var correct = chosen === q.payload.answer;
-    wrap.querySelectorAll(".choice").forEach(function (b, i) {
+    var _cs = wrap.children, _c2 = [];
+    for (var _i = 0; _i < _cs.length; _i++) if (_cs[_i].className.indexOf("choice") >= 0) _c2.push(_cs[_i]);
+    _c2.forEach(function (b, i) {
       b.disabled = true;
       if (i === q.payload.answer) b.classList.add("correct");
       else if (i === chosen) b.classList.add("wrong");

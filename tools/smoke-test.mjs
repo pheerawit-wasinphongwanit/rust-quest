@@ -125,6 +125,23 @@ for (const sc of LAB.scenes) {
 }
 const labDoneCount = Object.keys(api.getSave().lab).length;
 
+// ---------- Review queue + stats (M4) ----------
+api.renderStats();
+const statsHtml = documentStub.getElementById("stats-body").innerHTML;
+if (!statsHtml.includes("stat-box")) { console.error("FAIL: stats screen empty"); process.exit(1); }
+api.startReview(); // hotlist exists (wrong answers accumulated from choice-0 clicking)
+const hotLen = (() => {
+  const c = LAB ? 0 : 0; return 0;
+})();
+let reviewQ = 0;
+for (let i = 0; i < 12; i++) { // review queue is capped at 12
+  if (!answerCurrent()) break;
+  reviewQ++;
+  documentStub.getElementById("btn-next").click();
+}
+const persistedBefore = JSON.parse(store["rustquest.save.v1"]);
+if (reviewQ === 0) { console.error("FAIL: review queue did not run"); process.exit(1); }
+
 // ---------- assertions ----------
 const save = api.getSave();
 const saveKeys = Object.keys(save);
@@ -140,5 +157,7 @@ const seenTotal = Object.values(persisted.qstats).reduce((a, s) => a + s.seen, 0
 ok(seenTotal >= QS.length, `qstats seen total ${seenTotal} >= ${QS.length}`);
 ok(persisted.xp > 0, "xp accumulated: " + persisted.xp);
 ok(labDoneCount === 7, `lab scenes done 7, got ${labDoneCount}`);
-console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, lab=${labDoneCount}/7, xp=${persisted.xp}, best=${persisted.boss.best}`);
+ok(reviewQ > 0 && reviewQ <= 12, `review queue ran ${reviewQ} questions (1-12)`);
+ok(statsHtml.includes("ดาวรวม"), "stats boxes rendered");
+console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, lab=${labDoneCount}/7, review=${reviewQ}, xp=${persisted.xp}, best=${persisted.boss.best}`);
 process.exit(fails === 0 ? 0 : 1);

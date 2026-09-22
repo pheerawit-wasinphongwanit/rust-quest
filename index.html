@@ -33,6 +33,19 @@
   @keyframes blink { 50% { opacity: .45; } }
   .mode-card .best { font-family: var(--mono); font-size: 11.5px; color: var(--cyan); border: 1px solid rgba(86,212,221,.4);
                      border-radius: 999px; padding: 2px 10px; position: absolute; top: 14px; right: 14px; }
+  .hero .crab { border-radius: 22px; box-shadow: 0 8px 40px rgba(247,129,102,.25); }
+  .result .mascot { width: 110px; height: 110px; border-radius: 24px; box-shadow: 0 8px 36px rgba(247,129,102,.22); }
+
+  /* stats */
+  .stats-grid { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 22px; }
+  .stat-box { flex: 1 1 180px; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+  .stat-box .v { font-family: var(--mono); font-size: 26px; font-weight: 700; color: var(--accent); }
+  .stat-box .l { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+  .cat-bar { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+  .cat-bar .name { width: 170px; font-size: 14px; color: var(--text-dim); }
+  .cat-bar .bar { flex: 1; height: 10px; background: var(--bg-card); border-radius: 6px; overflow: hidden; }
+  .cat-bar .fill { height: 100%; background: var(--green); }
+  .cat-bar .pct { font-family: var(--mono); font-size: 12.5px; color: var(--text-faint); width: 88px; text-align: right; }
 
   /* Home */
   .hero { padding: 54px 20px 40px; text-align: center;
@@ -224,7 +237,7 @@
 <!-- ============ HOME ============ -->
 <section class="screen active" id="screen-home">
   <div class="hero">
-    <div class="crab">🦀</div>
+    <div class="crab" id="hero-crab">🦀</div>
     <h1>Rust<span class="q">Quest</span></h1>
     <p>ทบทวน Rust ผ่านเกม — syntax ที่ใช้บ่อย · pattern จาก code review จริงของ Goose · และโครงสร้างข้อมูลในหน่วยความจำตอนโปรแกรมทำงาน</p>
     <div class="mode-grid">
@@ -245,8 +258,19 @@
         <p>จับเวลา 2:30 นาที · 20 ข้อสุ่มรวมทุกหมวด · ตอบผิดหักเวลา −5 วินาที</p>
         <span class="best" id="boss-best">ยังไม่เคยเล่น</span>
       </div>
+      <div class="mode-card" id="go-review">
+        <div class="ico">🔁</div>
+        <h3>ทบทวนข้อที่พลาด</h3>
+        <p>รวบรวมข้อที่ตอบผิดบ่อยมาซ้อมอีกรอบ (สุ่มจาก hotlist)</p>
+        <span class="best" id="review-count">ยังไม่มีข้อมูล</span>
+      </div>
+      <div class="mode-card" id="go-stats">
+        <div class="ico">📊</div>
+        <h3>สถิติ</h3>
+        <p>XP · ดาว · ความแม่นยำแยกหมวด · Boss · Memory Lab</p>
+      </div>
     </div>
-    <div class="home-foot" id="home-foot">v0.3.0-M3 · 150 ข้อ · 8 ด่าน · Memory Lab 7 ฉาก · แหล่งเนื้อหา: Rust Cookbook · Goose code review · เล่นออฟไลน์ได้ · เก็บความคืบหน้าในเครื่อง</div>
+    <div class="home-foot" id="home-foot">v0.4.0-M4 · 150 ข้อ · 8 ด่าน · Memory Lab 7 ฉาก · แหล่งเนื้อหา: Rust Cookbook · Goose code review · เล่นออฟไลน์ได้ · เก็บความคืบหน้าในเครื่อง</div>
   </div>
 </section>
 
@@ -258,6 +282,17 @@
       <h2 style="margin:0;">🗺️ เลือกด่าน</h2>
     </div>
     <div class="lvl-list" id="lvl-list"></div>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="screen" id="screen-stats">
+  <div class="wrap">
+    <div style="margin-top:26px; display:flex; align-items:center; gap:14px;">
+      <button class="btn" id="stats-back">← หน้าแรก</button>
+      <h2 style="margin:0;">📊 สถิติของคุณ</h2>
+    </div>
+    <div id="stats-body"></div>
   </div>
 </section>
 
@@ -317,6 +352,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="src/questions.js"></script>
+<script src="src/mascots.js"></script>
 <script src="src/memorylab.js"></script>
 <script>
 (function () {
@@ -338,7 +374,7 @@
   // ---------- helpers ----------
   function $(id) { return document.getElementById(id); }
   function show(id) {
-    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("active"); });
+    qsa(document, ".screen").forEach(function (s) { s.classList.remove("active"); });
     $(id).classList.add("active");
     $("hud").style.display = (id === "screen-home") ? "none" : "flex";
     $("hud-timer").style.display = (id === "screen-quiz" && run && run.mode === "boss") ? "inline" : "none";
@@ -360,8 +396,38 @@
     if (lp && window.RQ_LAB) lp.textContent = window.RQ_LAB.scenes.filter(function (s) {
       return (SAVE.lab || {})[s.id];
     }).length + "/" + window.RQ_LAB.scenes.length + " ฉาก";
+    var rc = $("review-count");
+    if (rc) {
+      var hot = reviewHotlist();
+      rc.textContent = hot.length ? hot.length + " ข้อรอทบทวน" : "ยังไม่มีข้อมูล";
+    }
+  }
+
+  function reviewHotlist() {
+    return Object.keys(SAVE.qstats)
+      .filter(function (id) { return SAVE.qstats[id].wrong > 0 && QMAP[id]; })
+      .sort(function (a, b) {
+        var sa = SAVE.qstats[a], sb = SAVE.qstats[b];
+        return (sb.wrong / sb.seen) - (sa.wrong / sa.seen) || sb.wrong - sa.wrong;
+      })
+      .slice(0, 12);
+  }
+
+  function startReview() {
+    var hot = reviewHotlist();
+    if (!hot.length) { toast("ยังไม่มีข้อที่พลาด — เล่นด่านหรือ Boss Rush ก่อนนะ"); return; }
+    run = { lvl: { id: "review", title: "🔁 ทบทวนข้อที่พลาด" }, mode: "review", qids: hot,
+      idx: -1, correct: 0, streak: 0, xpGained: 0, perQ: [] };
+    show("screen-quiz");
+    nextQuestion();
   }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function rep(s, n) { var o = ""; for (var i = 0; i < n; i++) o += s; return o; }
+  function qsa(root, sel) {
+    var list = root.querySelectorAll(sel), out = [];
+    for (var i = 0; i < list.length; i++) out.push(list[i]);
+    return out;
+  }
 
   // ---------- rust syntax highlight (same family as goose docs) ----------
   var KW = ["async","await","break","const","continue","crate","dyn","else","enum","extern","false","fn","for","if","impl","in","let","loop","match","mod","move","mut","pub","ref","return","self","static","struct","super","trait","true","type","unsafe","use","where","while","as"];
@@ -544,7 +610,7 @@
     renderProgress();
     $("q-count").textContent = "ข้อ " + (run.idx + 1) + "/" + run.qids.length;
     $("q-cat").textContent = catName(q.cat);
-    $("q-diff").textContent = "●".repeat(q.diff) + "○".repeat(3 - q.diff);
+    $("q-diff").textContent = rep("●", q.diff) + rep("○", 3 - q.diff);
     $("q-streak").textContent = run.streak >= 2 ? ("🔥 streak ×" + run.streak) : "";
     $("fb").className = "fb";
     $("btn-next").style.display = "none";
@@ -648,7 +714,7 @@
     extra = extra || {};
     var correct = (q.type === "order") ? (chosen === 1) : (chosen === q.payload.answer);
     // lock UI
-    var allBtns = ($("q-card").querySelectorAll(".choice, .chip, .ord-line") || []);
+    var allBtns = qsa($("q-card"), ".choice, .chip, .ord-line");
     allBtns.forEach(function (b) { b.disabled = true; b.style.pointerEvents = "none"; });
     if (q.type === "mcq" || q.type === "output" || q.type === "bug" || q.type === "memory") {
       btns.forEach(function (b, i) {
@@ -656,14 +722,14 @@
         else if (i === chosen) b.classList.add("wrong");
       });
     } else if (q.type === "fill") {
-      extra.chips.querySelectorAll(".chip").forEach(function (b, i) {
+      qsa(extra.chips, ".chip").forEach(function (b, i) {
         if (i === q.payload.answer) b.classList.add("correct");
         else if (i === chosen) b.classList.add("wrong");
       });
       var slot = $("blank-slot");
       if (slot) { slot.textContent = q.payload.choices[q.payload.answer]; slot.style.color = "var(--green)"; }
     } else if (q.type === "order") {
-      var lines = $("ord-answer").querySelectorAll(".ord-line");
+      var lines = qsa($("ord-answer"), ".ord-line");
       lines.forEach(function (d, i) {
         var ok = pickedCorrectAt(q, extra.orderPicked, i);
         d.classList.add(ok ? "ok" : "bad");
@@ -715,16 +781,26 @@
     return q.payload.choices[q.payload.answer];
   }
 
+  function mascotImg(kind, fallbackEmoji) {
+    var src = window.RQ_MASCOTS && window.RQ_MASCOTS[kind];
+    if (src) return '<img class="mascot" src="' + src + '" alt="' + fallbackEmoji + '">';
+    return fallbackEmoji;
+  }
+
   function finishLevel() {
     stopBossTimer();
-    if (run.mode === "boss") {
-      var isBest = run.correct > (SAVE.boss.best || 0);
+    if (run.mode === "boss" || run.mode === "review") {
+      var isBoss = run.mode === "boss";
+      var isBest = isBoss && run.correct > (SAVE.boss.best || 0);
       if (isBest) { SAVE.boss.best = run.correct; persist(); }
       var total = run.qids.length;
-      $("res-emoji").textContent = isBest ? "👑" : (run.correct >= total * 0.7 ? "⚔️" : "💪");
+      var kind = run.correct >= total * 0.7 ? "cheer" : "encourage";
+      $("res-emoji").innerHTML = mascotImg(kind, isBoss ? "⚔️" : "🔁");
       $("res-stars").innerHTML = "";
-      $("res-title").textContent = "Boss Rush จบแล้ว — ตอบถูก " + run.correct + "/" + total + " ข้อ";
-      $("res-sub").textContent = "ได้ XP รวม +" + run.xpGained + (run.timeLeft <= 0 ? " · ⏱ หมดเวลา" : " · เคลียร์ครบ 20 ข้อ!") + (isBest ? " · สถิติใหม่!" : " · สถิติเดิม " + SAVE.boss.best + "/20");
+      $("res-title").textContent = (isBoss ? "Boss Rush จบแล้ว — " : "ทบทวนจบแล้ว — ") + "ตอบถูก " + run.correct + "/" + total + " ข้อ";
+      $("res-sub").textContent = "ได้ XP รวม +" + run.xpGained +
+        (isBoss ? (run.timeLeft <= 0 ? " · ⏱ หมดเวลา" : " · เคลียร์ครบ!") + (isBest ? " · สถิติใหม่!" : " · สถิติเดิม " + SAVE.boss.best + "/20")
+                : (run.correct === total ? " · คลีนกว่าง! hotlist ว่างลงแล้ว" : " · ข้อที่ยังพลาดจะรออยู่ในคิวทบทวน"));
       renderBossReview();
       show("screen-result");
       return;
@@ -737,7 +813,7 @@
       bestScore: Math.max(prev.bestScore, correct)
     };
     persist();
-    $("res-emoji").textContent = stars === 3 ? "🏆" : stars === 2 ? "🎉" : stars === 1 ? "👍" : "💪";
+    $("res-emoji").innerHTML = mascotImg(stars === 3 ? "cheer" : "hello", stars === 3 ? "🏆" : stars === 2 ? "🎉" : stars === 1 ? "👍" : "💪");
     $("res-stars").innerHTML = [1, 2, 3].map(function (i) {
       return '<span class="' + (i <= stars ? "" : "off") + '">★</span>';
     }).join("");
@@ -791,27 +867,74 @@
     });
   }
 
+  // ---------- stats screen ----------
+  function renderStats() {
+    var body = $("stats-body");
+    var stats = SAVE.qstats;
+    var seen = 0, wrong = 0;
+    Object.keys(stats).forEach(function (id) { seen += stats[id].seen; wrong += stats[id].wrong; });
+    var stars = 0; Object.keys(SAVE.levels).forEach(function (k) { stars += SAVE.levels[k].stars || 0; });
+    var catAgg = {};
+    QS.forEach(function (q) {
+      var st = stats[q.id];
+      if (!st) return;
+      var a = catAgg[q.cat] || (catAgg[q.cat] = { seen: 0, wrong: 0 });
+      a.seen += st.seen; a.wrong += st.wrong;
+    });
+    var catNames = { syntax: "ไวยากรณ์/มาตรฐาน", goose: "Goose patterns", memory: "หน่วยความจำ/ownership" };
+    var html = '<div class="stats-grid">' +
+      '<div class="stat-box"><div class="v">' + SAVE.xp + '</div><div class="l">XP รวม</div></div>' +
+      '<div class="stat-box"><div class="v">' + stars + '★</div><div class="l">ดาวรวม (สูงสุด ' + LEVELS.length * 3 + ')</div></div>' +
+      '<div class="stat-box"><div class="v">🔥 ' + SAVE.streakBest + '</div><div class="l">streak สูงสุด</div></div>' +
+      '<div class="stat-box"><div class="v">' + (SAVE.boss.best || 0) + '/20</div><div class="l">Boss Rush สถิติดีสุด (เล่น ' + (SAVE.boss.plays || 0) + ' ครั้ง)</div></div>' +
+      '<div class="stat-box"><div class="v">' + Object.keys(SAVE.lab || {}).length + '/7</div><div class="l">Memory Lab ผ่านแล้ว</div></div>' +
+      '<div class="stat-box"><div class="v">' + (seen ? Math.round((seen - wrong) / seen * 100) : 0) + '%</div><div class="l">ความแม่นยำรวม (' + seen + " ครั้งที่ตอบ)</div></div>" +
+      "</div>";
+    html += '<h3 style="margin-top:26px;">ความแม่นยำแยกหมวด</h3>';
+    Object.keys(catAgg).forEach(function (cat) {
+      var a = catAgg[cat];
+      var pct = a.seen ? Math.round((a.seen - a.wrong) / a.seen * 100) : 0;
+      html += '<div class="cat-bar"><span class="name">' + (catNames[cat] || cat) + '</span>' +
+        '<div class="bar"><div class="fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="pct">' + pct + "% (" + a.seen + ")</span></div>";
+    });
+    html += '<h3 style="margin-top:26px;">ความคืบหน้าด่าน</h3>';
+    LEVELS.forEach(function (lvl) {
+      var rec = SAVE.levels[lvl.id];
+      html += '<div class="review-item"><span class="mark ' + (rec && rec.stars ? "ok" : "bad") + '">' +
+        (rec && rec.stars ? rep("★", rec.stars) : "🔒") + "</span><span>" + esc(lvl.title) + " · " + lvl.questions.length + " ข้อ</span></div>";
+    });
+    body.innerHTML = html;
+  }
+
   // ---------- wiring ----------
   $("go-campaign").onclick = function () { renderLevels(); show("screen-levels"); };
   $("go-boss").onclick = function () { startBoss(); };
+  $("go-review").onclick = function () { startReview(); };
+  $("go-stats").onclick = function () { renderStats(); show("screen-stats"); };
+  $("stats-back").onclick = function () { show("screen-home"); };
   $("go-lab").onclick = function () { if (window.RQ_LAB) window.RQ_LAB.open(); else toast("Memory Lab ยังไม่พร้อม"); };
   $("lab-back").onclick = function () { show("screen-home"); };
   $("lv-back").onclick = function () { show("screen-home"); };
   $("hud-home").onclick = function () { stopBossTimer(); show("screen-home"); };
   $("btn-quit").onclick = function () {
-    var wasBoss = run && run.mode === "boss";
+    var wasSolo = run && (run.mode === "boss" || run.mode === "review");
     stopBossTimer();
-    if (wasBoss) show("screen-home"); else { renderLevels(); show("screen-levels"); }
+    if (wasSolo) show("screen-home"); else { renderLevels(); show("screen-levels"); }
     toast("ออกกลางคัน (ความคืบหน้าข้อนี้ไม่ถูกบันทึก)");
   };
   $("btn-next").onclick = nextQuestion;
-  $("res-back").onclick = function () { if (run && run.mode === "boss") show("screen-home"); else { renderLevels(); show("screen-levels"); } };
-  $("res-retry").onclick = function () { if (run && run.mode === "boss") startBoss(); else startLevel(run.lvl); };
+  $("res-back").onclick = function () { if (run && (run.mode === "boss" || run.mode === "review")) show("screen-home"); else { renderLevels(); show("screen-levels"); } };
+  $("res-retry").onclick = function () {
+    if (run && run.mode === "boss") startBoss();
+    else if (run && run.mode === "review") startReview();
+    else startLevel(run.lvl);
+  };
 
   document.addEventListener("keydown", function (e) {
     if (!document.querySelector("#screen-quiz.active")) return;
     if (["1", "2", "3", "4"].indexOf(e.key) >= 0) {
-      var btns = $("q-card").querySelectorAll(".choice:not([disabled])");
+      var btns = qsa($("q-card"), ".choice:not([disabled])");
       var i = KEYS.indexOf(e.key);
       if (btns[i]) btns[i].click();
     } else if (e.key === "Enter" && $("btn-next").style.display !== "none") {
@@ -820,9 +943,15 @@
   });
 
   refreshHud();
+  // mascot (M4) — swap emoji hero for generated art when available
+  if (window.RQ_MASCOTS && window.RQ_MASCOTS.hello) {
+    var hero = $("hero-crab");
+    hero.innerHTML = '<img class="crab" src="' + window.RQ_MASCOTS.hello + '" alt="🦀">';
+  }
   // engine test/debug hook (used by tools/smoke-test.mjs)
   window.RQ_ENGINE = {
     startLevel: startLevel, startBoss: startBoss, nextQuestion: nextQuestion,
+    startReview: startReview, renderStats: renderStats,
     show: show, persist: persist,
     getSave: function () { return SAVE; }
   };
