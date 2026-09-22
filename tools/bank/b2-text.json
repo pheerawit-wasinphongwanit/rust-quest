@@ -1,0 +1,538 @@
+[
+  {
+    "id": "q036",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "String กับ &str ต่างกันตรงไหน?",
+    "payload": {
+      "choices": [
+        "String = เจ้าของข้อมูลจริง (heap, แก้ไขได้) · &str = มุมมองยืมอ่านของข้อความ",
+        "String คือไทย · &str คืออังกฤษ",
+        "&str เก็บบน heap เสมอ · String เก็บบน stack",
+        "เหมือนกัน ใช้แทนกันได้ทุกที่"
+      ],
+      "answer": 0
+    },
+    "explain": "`String` เป็นเจ้าของ buffer (ยืดหยุ่น แก้ไขได้) ส่วน `&str` เป็น \"สไลซ์\" — ชี้+ยาวเท่าไหร่ อ่านอย่างเดียว ไม่ต้องเป็นเจ้าของ — idiom มาตรฐาน: รับพารามิเตอร์เป็น `&str` (ยืดกว้าง) แล้วเก็บ/คืนเป็น `String` เมื่อต้องเป็นเจ้าของ",
+    "source": "พื้นฐาน syntax — String vs &str"
+  },
+  {
+    "id": "q037",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut s = String::from(\"ไทย\");\n    s.push_str(\"แลนด์\");\n    println!(\"{}\", s.len());\n}",
+      "choices": [
+        "24",
+        "2",
+        "8",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "24"
+      }
+    },
+    "explain": "ไทย = 3 ตัวอักษร × 3 bytes = 9 · แลนด์ = แ,ล,น,ด,์ 5 ตัว (รวมไม้ไต่คู้ที่เป็น combining) × 3 = 15 → รวม 24 bytes (`len()` นับ byte เสมอ) — push_str เติมท้ายโดยยืด buffer ให้เอง",
+    "source": "Cookbook · Text Processing — String"
+  },
+  {
+    "id": "q038",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let name = \"ฟ้า\";\n    let msg = format!(\"สวัสดี {} อายุ {}\", name, 30);\n    println!(\"{}\", msg);\n}",
+      "choices": [
+        "สวัสดี ฟ้า อายุ 30",
+        "สวัสดี {name} อายุ {30}",
+        "คอมไพล์ไม่ผ่าน ปนชนิดกันไม่ได้",
+        "สวัสดี ฟ้าอายุ 30"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "สวัสดี ฟ้า อายุ 30"
+      }
+    },
+    "explain": "`format!` ประกอบข้อความจากหลายชนิดผ่าน `{}` (Display) แล้วคืน String — เหมือน println! แต่ไม่พิมพ์ เอาไปใช้ต่อ — ไม่ต้องแปลงชนิดเองเลย",
+    "source": "พื้นฐาน syntax — format!"
+  },
+  {
+    "id": "q039",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "เติมเมธอดสร้าง String จาก string literal",
+    "payload": {
+      "code": "let v = String::___(\"สวัสดี\");\nprintln!(\"{}\", v);",
+      "choices": [
+        "from",
+        "new",
+        "of",
+        "str"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`String::from(\"สวัสดี\")` — from คัดลอก bytes ไปบน heap สร้าง String เจ้าของใหม่ · ทางเลือกเทียบเท่า: `\"สวัสดี\".to_string()` และ `.into()` — ทั้งสามได้ผลเหมือนกัน",
+    "source": "พื้นฐาน syntax — String::from"
+  },
+  {
+    "id": "q040",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (สไลซ์ข้อความ ASCII)",
+    "payload": {
+      "code": "fn main() {\n    let s = String::from(\"Rust\");\n    let slice = &s[1..3];\n    println!(\"{}\", slice);\n}",
+      "choices": [
+        "us",
+        "Ru",
+        "st",
+        "คอมไพล์ไม่ผ่าน เพราะ s ถูกยืม"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "us"
+      }
+    },
+    "explain": "`&s[1..3]` ตัด byte ที่ 1 ถึงก่อน 3 → \"us\" — สไลซ์เป็น **byte index** ใช้กับ ASCII ปลอดภัย แต่กับภาษาไทย/emoji ต้องระวังตำแหน่งตัด (ดูข้อถัดไป!)",
+    "source": "Cookbook · Text Processing — slicing"
+  },
+  {
+    "id": "q041",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "`let s = \"สวัสดี\"; println!(\"{}\", &s[0..2]);` จะเกิดอะไรขึ้น?",
+    "payload": {
+      "choices": [
+        "panic ตอนรัน: byte index 2 ไม่ใช่ขอบเขตตัวอักษร (char boundary)",
+        "พิมพ์ ส (ตัวอักษรแรก)",
+        "พิมพ์ byte แรกเป็นตัวเลข",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0
+    },
+    "explain": "ส กิน 3 bytes (0–2) — ตัดที่ byte 2 กลางตัวอักษรพอดี → runtime panic \"byte index 2 is not a char boundary\" — **คอมไพล์ผ่าน** แต่พังตอนรัน! · กับข้อความนอก ASCII ใช้ chars()/char_indices() เพื่อหาขอบเขตตัวอักษรจริง",
+    "source": "Cookbook · Text Processing — UTF-8 boundaries"
+  },
+  {
+    "id": "q042",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    println!(\"{} {}\", \"ไทย\".len(), \"ไทย\".chars().count());\n}",
+      "choices": [
+        "9 3",
+        "3 3",
+        "9 9",
+        "3 9"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "9 3"
+      }
+    },
+    "explain": "ไทย = 3 ตัวอักษร แต่ละตัว 3 bytes ใน UTF-8 → `len()` (byte) = 9, `chars().count()` (ตัวอักษร) = 3 — จำคู่นี้ไว้เจอบั๊กไทยได้ทุกภาษาโปรแกรมมิ่งที่ใช้ UTF-8",
+    "source": "Cookbook · Text Processing — bytes vs chars"
+  },
+  {
+    "id": "q043",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`\"hi\".to_string()` กับ `\"hi\".to_owned()` ต่างกันไหม?",
+    "payload": {
+      "choices": [
+        "ได้ผลเหมือนกัน (คืน String จาก &str) — เลือกอันที่ทีมถนัด",
+        "to_owned เร็วกว่าเพราะไม่ก๊อป",
+        "to_string คืน &str · to_owned คืน String",
+        "to_owned ใช้ได้แค่ตอน compile"
+      ],
+      "answer": 0
+    },
+    "explain": "สำหรับ &str ทั้งคู่สร้าง String ใหม่ (ก๊อป bytes ไป heap) ผลเหมือนกันจริง — สไตล์ Rust ยุคใหม่นิยม to_owned() สั้นกว่า แต่รู้กันทั้งสองเพราะเจอทั้งสองในโค้ดจริง",
+    "source": "พื้นฐาน syntax — to_string vs to_owned"
+  },
+  {
+    "id": "q044",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (match กับ Option)",
+    "payload": {
+      "code": "fn main() {\n    let x: Option<i32> = Some(5);\n    let r = match x {\n        Some(v) => v * 2,\n        None => 0,\n    };\n    println!(\"{}\", r);\n}",
+      "choices": [
+        "10",
+        "Some(10)",
+        "5",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "10"
+      }
+    },
+    "explain": "match บังคับครบทุกกรณี: Some ดึงค่าออกมาคูณสอง (10), None ให้ 0 — ถ้าลืมแขน None จะคอมไพล์ไม่ผ่าน (non-exhaustive) — ความปลอดภัยที่ Rust ออกแบบมาตั้งแต่ต้น",
+    "source": "พื้นฐาน syntax — match Option"
+  },
+  {
+    "id": "q045",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let x: Option<i32> = None;\n    println!(\"{}\", x.unwrap_or(99));\n}",
+      "choices": [
+        "99",
+        "None",
+        "0",
+        "panic เพราะเป็น None"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "99"
+      }
+    },
+    "explain": "`unwrap_or(default)` ดึงค่าถ้ามี ไม่มีใช้ค่าสำรอง — ต่างจาก `unwrap()` ที่ None แล้ว panic — เลือกให้ถูกบริบท: มีค่าเริ่มต้นสมเหตุสมผล → unwrap_or, ค่า default แพง/ต้องคำนวณ → unwrap_or_else(|| ...)",
+    "source": "พื้นฐาน syntax — Option combinators"
+  },
+  {
+    "id": "q046",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เติม combinator ที่แปลงค่าข้างใน Some โดยไม่แตะ None",
+    "payload": {
+      "code": "let x = Some(2);\nlet v = x.___(|n| n * 10).unwrap();\nprintln!(\"{}\", v);",
+      "choices": [
+        "map",
+        "and_then",
+        "flatten",
+        "apply"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`map(f)` แปลงค่าใน Some: Some(2) → Some(20), None ผ่านไปเฉย ๆ (ยังเป็น None) — เหมือน map ของ iterator แต่ทำงานกับ \"กล่อง 0-1 ใบ\" · and_then ต่างตรงใช้เมื่อ f คืน Option ซ้อน (flat)",
+    "source": "พื้นฐาน syntax — Option::map"
+  },
+  {
+    "id": "q047",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "`let x: Option<i32> = None; println!(\"{}\", x.unwrap());` จะเกิดอะไรขึ้น?",
+    "payload": {
+      "choices": [
+        "panic ตอนรัน พร้อมข้อความ called `Option::unwrap()` on a `None` value",
+        "พิมพ์ 0",
+        "พิมพ์ None",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0
+    },
+    "explain": "unwrap กับ None = panic ทันที — เหมาะก็ต่อเมื่อมั่นใจ 100% ว่ามีค่า (หรือโปรโตไทป์) · ในโค้ดจริงเลือก unwrap_or/expect(\"เหตุผล\") หรือ match/`?` แทน เพื่อไม่โดน panic ตอนโปรแกรมรับอะไรมาแปลก ๆ",
+    "source": "พื้นฐาน syntax — unwrap discipline"
+  },
+  {
+    "id": "q048",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (if let)",
+    "payload": {
+      "code": "fn main() {\n    if let Some(n) = Some(7) {\n        println!(\"เจอ {}\", n);\n    } else {\n        println!(\"ไม่เจอ\");\n    }\n}",
+      "choices": [
+        "เจอ 7",
+        "ไม่เจอ",
+        "Some(7)",
+        "คอมไพล์ไม่ผ่าน ต้องเป็น match เท่านั้น"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "เจอ 7"
+      }
+    },
+    "explain": "`if let Some(n) = ...` = match แบบย่อ เอาไว้ตอนสนใจแค่ pattern เดียว — Some ดึง 7 ออกมาทำในบล็อก, None ไป else — สั้นกว่า match เมื่อมีแค่สองทางและสนใจทางเดียว",
+    "source": "พื้นฐาน syntax — if let"
+  },
+  {
+    "id": "q049",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "ฟังก์ชันไหนคืน Result แล้วเราอยาก \"ได้ค่าหรือใช้สำรอง\" — idiom ไหนเหมาะที่สุด?",
+    "payload": {
+      "choices": [
+        "parse().unwrap_or(0)",
+        "parse().unwrap() ให้จบเร็ว ๆ",
+        "match ทุกครั้งเพื่อความชัด แม้ยาว 10 บรรทัด",
+        "panic!(\"ไม่ผ่าน\")"
+      ],
+      "answer": 0
+    },
+    "explain": "unwrap_or ให้ค่าสำรองเมื่อ Err — กระชับและไม่พังตอนรัน · unwrap เสี่ยง panic · match ละเอียดแต่ฟุ่มเฟือยถ้าแค่อยากได้ค่า — บทเรียน Rust ทั่วไป: เลือก combinator ให้พอดีกับความต้องการ ไม่ใช่ unwrap ทุกที่",
+    "source": "พื้นฐาน syntax — Result combinators"
+  },
+  {
+    "id": "q050",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn half_even(n: i32) -> Result<i32, String> {\n    if n % 2 != 0 {\n        return Err(format!(\"odd {}\", n));\n    }\n    Ok(n / 2)\n}\nfn main() {\n    println!(\"{:?} {:?}\", half_even(10), half_even(3));\n}",
+      "choices": [
+        "Ok(5) Err(\"odd 3\")",
+        "5 ความผิดพลาด",
+        "Ok(5) Ok(3)",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "Ok(5) Err(\"odd 3\")"
+      }
+    },
+    "explain": "Result มีสองด้าน: Ok(ค่าที่สำเร็จ) / Err(ความผิดพลาดพร้อมข้อมูล) — 10 คู่ → Ok(5), 3 คี่ → Err(\"odd 3\") · พิมพ์ผ่าน {:?} เห็นโครงชัด ๆ — เทียบกับ exception ของภาษาอื่น: ความผิดพลาดเป็น \"ค่า\" ที่ต้องรับมือตรง ๆ ใน type",
+    "source": "พื้นฐาน syntax — Result"
+  },
+  {
+    "id": "q051",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เติมเมธอดแปลงข้อความเป็นตัวเลข",
+    "payload": {
+      "code": "let v: i32 = \"42\".___().unwrap();\nprintln!(\"{}\", v + 1);",
+      "choices": [
+        "parse",
+        "to_i32",
+        "int",
+        "num"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`\"42\".parse()` คืน Result (อาจพลาดถ้าข้อความไม่ใช่เลข) และชนิดปลายทางบอกจาก annotation ของตัวแปร — `let v: i32` — เทคนิคเดียวใช้แปลง f64/u8 ฯลฯ ได้หมด",
+    "source": "Cookbook · Type Conversion — parse"
+  },
+  {
+    "id": "q052",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let n = \"42\".parse().unwrap();\n    println!(\"{}\", n);\n}",
+      "choices": [
+        "error[E0284]: type annotations needed — parse แปลงเป็นอะไรได้หลายชนิด จึงเดาไม่ออก",
+        "error[E0308]: mismatched types",
+        "error[E0277]: \"42\" ไม่ใช่ตัวเลข",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0284"
+      }
+    },
+    "explain": "parse เป็น generic: i32? f64? bool? อาจถูกทั้งคู่ — ไม่มีใครบอกปลายทาง (println `{}` ก็ไม่ช่วย) → ต้องเขียน `let n: i32 = ...` หรือ `\"42\".parse::<i32>()` — ตัวอย่าง type annotation ที่ \"จำเป็น\" ไม่ใช่ตกแต่ง",
+    "source": "Cookbook · Type Conversion — parse annotation"
+  },
+  {
+    "id": "q053",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (cast ค่าตัดเศษ)",
+    "payload": {
+      "code": "fn main() {\n    let a: i32 = 300;\n    let b = a as u8;\n    println!(\"{}\", b);\n}",
+      "choices": [
+        "44",
+        "300",
+        "255",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "44"
+      }
+    },
+    "explain": "`as` cast ตัดเศษตามขนาดปลายทาง: u8 เก็บได้ 0–255 → 300 - 256 = 44 (wrap แบบเงียบ ไม่มี warning!) — as ใช้ได้เร็วแต่อันตรายเงียบ ๆ กับค่าเกินขอบ — Cookbook แนะนำ try_into() (คืน Result) เมื่อค่าอาจเกิน",
+    "source": "Cookbook · Type Conversion — as casting"
+  },
+  {
+    "id": "q054",
+    "type": "order",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เรียงบรรทัดให้โปรแกรมตัดช่องว่างหัวท้ายแล้วพิมพ์ HI",
+    "payload": {
+      "lines": [
+        "println!(\"{}\", v.trim().to_uppercase());",
+        "fn main() {",
+        "let v = String::from(\"  hi  \");",
+        "}"
+      ],
+      "answer": [
+        1,
+        2,
+        0,
+        3
+      ],
+      "verify": {
+        "kind": "orderOutput",
+        "expected": "HI"
+      }
+    },
+    "explain": "ประกาศข้อความ → ตัดช่องว่างหัวท้าย (trim) → พิมพ์ใหญ่ (to_uppercase) — สองเมธอดนี้ต่อกันได้เพราะต่างคืนใหม่ ไม่แก้ของเดิม (เดิม v ยังเป็น \"  hi  \") — เรียงก่อนหลังสลับก็รันได้ แต่ได้ผลต่างกัน",
+    "source": "Cookbook · Text Processing — trim/uppercase"
+  },
+  {
+    "id": "q055",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`split_whitespace()` ต่างจาก `split(' ')` ตรงไหน?",
+    "payload": {
+      "choices": [
+        "split_whitespace ตัดคำเฉพาะช่องว่างจริง รวมหลายช่อง/tabs เป็นตัวเดียว ไม่มี string ว่างหลุดมา",
+        "split_whitespace เร็วกว่า 10 เท่า",
+        "split(' ') ตัดได้แค่ภาษาอังกฤษ",
+        "เหมือนกันทุกประการ"
+      ],
+      "answer": 0
+    },
+    "explain": "\"a  b\".split(' ') ได้ [\"a\", \"\", \"b\"] (ช่องซ้อนทำให้เกิด string ว่าง!) ส่วน split_whitespace ได้ [\"a\", \"b\"] สะอาด — นับคำ/เตรียม input ใช้ split_whitespace เป็นค่าเริ่มต้น",
+    "source": "Cookbook · Text Processing — split_whitespace"
+  },
+  {
+    "id": "q056",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let words: Vec<&str> = \"a b  c\".split_whitespace().collect();\n    println!(\"{:?} {}\", words, words.len());\n}",
+      "choices": [
+        "[\"a\", \"b\", \"c\"] 3",
+        "[\"a\", \"b\", \"\", \"c\"] 4",
+        "[\"a b  c\"] 1",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[\"a\", \"b\", \"c\"] 3"
+      }
+    },
+    "explain": "split_whitespace ข้ามช่องว่างซ้อน → ได้ 3 คำสะอาด [\"a\", \"b\", \"c\"] — รับ &str ที่ยืมจากข้อความเดิม (ไม่ก๊อป — zero cost) จึง collect เป็น Vec<&str> ได้",
+    "source": "Cookbook · Text Processing — split_whitespace"
+  },
+  {
+    "id": "q057",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`let s3 = s1 + &s2;` หลังจบบรรทัดนี้ — เกิดอะไรกับ s1?",
+    "payload": {
+      "choices": [
+        "s1 ถูกย้าย (move) เข้าไปรวมใน s3 แล้ว ใช้ s1 ต่อไม่ได้",
+        "s1 ยังใช้ได้ปกติ เพราะ + ก๊อป",
+        "s1 กลายเป็นข้อความว่าง",
+        "คอมไพล์ไม่ผ่าน เพราะ + ใช้กับ String ไม่ได้"
+      ],
+      "answer": 0
+    },
+    "explain": "add ของ String รับ `self` (เจ้าของ) + `&str` — ดังนั้น `s1 + &s2` ยึด buffer ของ s1 ไปต่อท้ายแล้วส่งต่อเป็น s3: ประหยัด (ไม่ก๊อป) แต่ s1 หมดอายุ — อยากคงทั้งคู่ใช้ format! แทน",
+    "source": "พื้นฐาน syntax — String concatenation"
+  },
+  {
+    "id": "q058",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let s1 = String::from(\"a\");\n    let s2 = String::from(\"b\");\n    let s3 = s1 + s2;\n    println!(\"{}\", s3);\n}",
+      "choices": [
+        "error[E0308]: + ของ String ต้องการ &str เป็นตัวที่สอง ไม่ใช่ String — ใช้ s1 + &s2",
+        "error[E0382]: s2 ถูกย้ายไปก่อนหน้า",
+        "error[E0277]: String บวกกันไม่ได้",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0308"
+      }
+    },
+    "explain": "signature จริง: `String + &str` — ตัวขวาต้องเป็น &str · เขียน `s1 + s2` ส่ง String มาผิดชนิด (E0308) — compiler เสนอแก้ให้เลย: เติม `&` → deref coercion แปลง &String เป็น &str ให้อัตโนมัติ",
+    "source": "พื้นฐาน syntax — String + &str"
+  },
+  {
+    "id": "q059",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let s = \"ab\".repeat(3);\n    println!(\"{} {}\", s, s.len());\n}",
+      "choices": [
+        "ababab 6",
+        "ab ab ab 8",
+        "ababab 2",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "ababab 6"
+      }
+    },
+    "explain": "`repeat(n)` ทำซ้ำข้อความ n รอบ → \"ababab\" (6 bytes) คืน String ใหม่ — เหมาะสร้าง separator/placeholder เช่น \"-\".repeat(40) แทนเขียนขีดสี่สิบตัวเอง",
+    "source": "Cookbook · Text Processing — repeat"
+  },
+  {
+    "id": "q060",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "ทำไม Rust ต้องมี String ทั้งที่มี str อยู่แล้ว?",
+    "payload": {
+      "choices": [
+        "str ขนาดไม่แน่นอน (unsized) เก็บเป็นเจ้าของเองไม่ได้ — String คือหัว (ptr/len/cap) ที่เป็นเจ้าของ heap และโตได้",
+        "str เก็บได้แค่ ASCII",
+        "String เขียนเร็วกว่าเพราะมีมาโคร",
+        "str ใช้ได้แค่ใน trait"
+      ],
+      "answer": 0
+    },
+    "explain": "str คือ \"ข้อความดิบ\" ไม่รู้ขนาดตอน compile จึงอยู่หลัง pointer เสมอ (&str) — String ห่อ heap buffer มาพร้อม ptr/len/cap ยืดหยุ่นและเป็นเจ้าของได้ — คู่นี้คือเหตุผลที่ API ไหนก็เจอ String/&str ตลอดเวลา",
+    "source": "พื้นฐาน syntax — String internals"
+  }
+]

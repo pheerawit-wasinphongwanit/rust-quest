@@ -1,0 +1,288 @@
+[
+  {
+    "id": "q137",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "thread::spawn รับอะไรเป็น argument?",
+    "payload": {
+      "choices": [
+        "closure — โค้ดที่จะรันใน thread ใหม่",
+        "ชื่อไฟล์โค้ด",
+        "ฟังก์ชันชื่อเดียวกับ thread",
+        "ไม่ต้องมี argument"
+      ],
+      "answer": 0
+    },
+    "explain": "`thread::spawn(|| { ... })` รับ closure แล้วเปิด thread ใหม่รันทันที (ไม่รอ) — คืน JoinHandle ไว้รอผล (join) — closure คือ \"ส่งโค้ดเป็นค่า\" ใน Rust ใช้ทั่ว: iterator, thread, callback",
+    "source": "Cookbook · Concurrency — spawn"
+  },
+  {
+    "id": "q138",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (spawn คืนค่าผ่าน join)",
+    "payload": {
+      "code": "use std::thread;\nfn main() {\n    let h = thread::spawn(|| 40 + 2);\n    let v = h.join().unwrap();\n    println!(\"{}\", v);\n}",
+      "choices": [
+        "42",
+        "40",
+        "คอมไพล์ไม่ผ่าน closure คืนค่าไม่ได้",
+        "พิมพ์ก็ได้ไม่พิมพ์ก็ได้ ไม่แน่นอน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "42"
+      }
+    },
+    "explain": "closure คืน 42 จาก thread ลูก → join() รอจน thread จบแล้วส่งผลกลับมาเป็น Result (Err ถ้าลูก panic) — การรอ join ก่อนพิมพ์ทำให้ลำดับ deterministic — ถ้าไม่ join แล้ว main จบก่อน ลูกจะถูกตัดตาย (ไม่ได้พิมพ์อะไรเลย)",
+    "source": "Cookbook · Concurrency — join"
+  },
+  {
+    "id": "q139",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร? (ส่งข้อมูลเข้า thread)",
+    "payload": {
+      "code": "use std::thread;\nfn main() {\n    let msg = String::from(\"hi\");\n    let h = thread::spawn(|| println!(\"{}\", msg));\n    h.join();\n}",
+      "choices": [
+        "error[E0373]: closure ของ thread อยู่ได้นานกว่าฟังก์ชันแต่ยืม msg — ต้องเติม move ให้ยึดเป็นของตัวเอง",
+        "error[E0507]: cannot move out of `msg`",
+        "error[E0277]: String ไม่ใช่ Send",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0373"
+      }
+    },
+    "explain": "spawn ต้องการ closure ที่อยู่ได้เกินกว่าฟังก์ชันปัจจุบัน ('static) — แต่ closure นี้ยืม msg ของ main ซึ่งอาจตายก่อน — แก้: `move ||` ยึด msg เข้า thread — นี่คือเหตุผลที่เห็นคำว่า move อยู่หน้า closure ของ spawn เกือบทุกตัวในโค้ดจริง (เช่น Goose)",
+    "source": "Cookbook · Concurrency — move closures"
+  },
+  {
+    "id": "q140",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (mpsc channel)",
+    "payload": {
+      "code": "use std::sync::mpsc;\nfn main() {\n    let (tx, rx) = mpsc::channel();\n    tx.send(1);\n    tx.send(2);\n    let mut sum = 0;\n    while let Ok(n) = rx.try_recv() {\n        sum += n;\n    }\n    println!(\"{}\", sum);\n}",
+      "choices": [
+        "3",
+        "1",
+        "0",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "3"
+      }
+    },
+    "explain": "mpsc = multi-producer single-consumer: ส่ง (tx.send) สองค่าเข้าคิว รับฝั่งเดียว (rx) ได้ครบ 1+2 = 3 — send/try_recv คืน Result (คิวอาจปิดไปแล้ว) — ในโค้ดจริงมักใช้ `for n in rx` วนรับจน channel ปิด",
+    "source": "Cookbook · Concurrency — mpsc channel"
+  },
+  {
+    "id": "q141",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เติมเมธอดส่งค่าเข้า channel",
+    "payload": {
+      "code": "use std::sync::mpsc;\nfn main() {\n    let (v, rx) = mpsc::channel();\n    v.___(\"ping\");\n    drop(v);\n    println!(\"{:?}\", rx.recv());\n}",
+      "choices": [
+        "send",
+        "push",
+        "emit",
+        "write"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "tx.send(value) ส่งค่าเข้าคิว (คืน Result) — โค้ดนี้ส่งแล้ว drop ผู้ส่ง จึง recv() ได้ Some(\"ping\") ค่าเดียวแล้ว channel ปิด — ชื่อเมธอดคือ send ตรง ๆ (ผู้ส่ง) / recv (ผู้รับ) ไม่มี push/emit",
+    "source": "Cookbook · Concurrency — channel"
+  },
+  {
+    "id": "q142",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "\"mpsc\" ย่อจาก multi-producer, single-consumer — แปลว่าอะไร?",
+    "payload": {
+      "choices": [
+        "ผู้ส่งได้หลายคน ผู้รับหนึ่งเดียว — ของเข้าคิวเดียวกัน ทีละชิ้น",
+        "ผู้ส่งหนึ่ง ผู้รับหลายคน แยกสำเนากันหมด",
+        "ส่ง-รับแบบ sync เท่านั้น ใช้ async ไม่ได้",
+        "คิวไม่มีวันเต็ม"
+      ],
+      "answer": 0
+    },
+    "explain": "หลายปากส่ง ปากเดียวรับ: เหมือนกล่องรับเอกสารหน้าห้อง — ใครกีดหย่อนได้ เจ้าหน้าที่คนเดียวเปิดทีละฉบับ (ลำดับรับประกัน) — เหมาะงาน \"รวมงานจากหลายแหล่งเข้าที่เดียว\" เช่น log collector — ต้องการหลายผู้รับ? นั่นคือ broadcast (คนละแชนแนล)",
+    "source": "Cookbook · Concurrency — mpsc"
+  },
+  {
+    "id": "q143",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "select! ของ tokio (ที่ Goose ใช้รวม stream) — ทำหน้าที่อะไร?",
+    "payload": {
+      "choices": [
+        "รอหลาย async งานพร้อมกัน ตัวไหนเสร็จก่อนทำอันนั้นก่อน (แข่งกัน ตัวที่ช้าถูกยกเลิกรอบนั้น)",
+        "รันทุกงานจนครบทุกตัวแบบขนาน",
+        "เลือก thread ที่ว่างที่สุดให้งาน",
+        "จัดลำดับงานตามความสำคัญ"
+      ],
+      "answer": 0
+    },
+    "explain": "select! = แข่งขัน: รอ event หลายทางพร้อมกัน เสร็จทางไหนก่อน วนรอบนั้นทำทางนั้น — Goose ใช้รวม stream ของข้อมูล+สัญญาณยกเลิกเป็น loop เดียว: มีข้อมวนถึงช่องข้อมูล มี cancel ถึงช่องออก — เขียนด้วย for สองอันทำไม่ได้ เพราะต้องรอ \"พร้อมกัน\"",
+    "source": "บทเรียน Goose · Async — select!"
+  },
+  {
+    "id": "q144",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "CancellationToken (ที่ Goose ใช้ 354 จุด) — วิธียกเลิกงานแบบ \"ร่วมมือ\" หมายความว่าไง?",
+    "payload": {
+      "choices": [
+        "ส่งสัญญาณขอให้งานหยุด แล้วงานเช็ค token ตามจุดที่เหมาะสมแล้วเลือกเก็บกวาด/ออกเอง — ไม่ใช่ยิงฆ่ากลางคัน",
+        "บังคับหยุด thread ทันทีที่สั่ง",
+        "หยุดทั้งโปรแกรมด้วย panic",
+        "ระงับ OS process ทั้งหมด"
+      ],
+      "answer": 0
+    },
+    "explain": "cooperative cancel = \"เคาะประตูขอให้ออก\" ไม่ใช่ \"ถอดประตูออก\": ยิง thread กลางคันทิ้ง resource ค้าง (ไฟล์ครึ่งเดียว, lock ค้าง) — token ให้งานเลือกจุดปลอดภัยที่จะออกเอง — 354 จุดหมายความว่า Goose ระวังแทบทุก await ที่ยาวนาน — สิ่งนี้ทำให้ปิดโปรแกรมได้ \"สวย ๆ\" เสมอ",
+    "source": "บทเรียน Goose · Async — CancellationToken"
+  },
+  {
+    "id": "q145",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (Arc + Mutex นับข้าม 4 threads)",
+    "payload": {
+      "code": "use std::sync::{Arc, Mutex};\nuse std::thread;\nfn main() {\n    let counter = Arc::new(Mutex::new(0));\n    let mut hs = vec![];\n    for _ in 0..4 {\n        let c = Arc::clone(&counter);\n        hs.push(thread::spawn(move || {\n            *c.lock().unwrap() += 1;\n        }));\n    }\n    for h in hs {\n        h.join();\n    }\n    println!(\"{}\", *counter.lock().unwrap());\n}",
+      "choices": [
+        "4",
+        "1",
+        "0",
+        "อาจเป็นเลขไหนก็ได้ 0-4 (race)"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "4"
+      }
+    },
+    "explain": "Arc แชร์ความเป็นเจ้าของ counter ให้ 4 threads + Mutex ทำให้บวกทีละคน (ไม่ตีกัน) → join ทุกตัวก่อนพิมพ์ = ได้ 4 แน่นอน — ถ้าไม่มี Mutex เป็น race ผลลัพธ์ไม่แน่นอน — คู่นี้คือ \"แชร์+แก้\" มาตรฐานของ Rust (และถ้าแค่อ่าน ไม่ต้อง Mutex)",
+    "source": "Cookbook · Concurrency — Arc<Mutex<T>>"
+  },
+  {
+    "id": "q146",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "use std::rc::Rc;\nuse std::thread;\nfn main() {\n    let s = Rc::new(String::from(\"hi\"));\n    let h = thread::spawn(move || println!(\"{}\", s));\n    h.join();\n}",
+      "choices": [
+        "error[E0277]: Rc<String> ไม่ปลอดภัยข้าม thread (ไม่ใช่ Send) — ต้องใช้ Arc แทน",
+        "error[E0382]: s ถูกย้ายสองครั้ง",
+        "error[E0507]: cannot move out of `s`",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0277"
+      }
+    },
+    "explain": "Rc นับผู้ถือด้วยตัวเลขธรรมดา — สอง thread บวกพร้อมกันได้ = นับผิด = ข้อมูลรั่ว/double free — Rust จึง mark Rc ว่า \"ไม่ Send\" (ส่งข้าม thread ไม่ได้) ตรวจตอน compile เลย — แก้เป็น Arc (atomic) — เปลี่ยนตัวอักษรเดียว ปลอดภัยขึ้นทั้งระบบ",
+    "source": "Cookbook · Concurrency — Rc vs Arc"
+  },
+  {
+    "id": "q147",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "async fn ใน Rust — ตัวฟังก์ชันเองทำอะไรตอนถูกเรียก?",
+    "payload": {
+      "choices": [
+        "สร้าง Future (สัญญาว่าจะมีค่ามา) แต่ยังไม่ทำงาน — ต้องมี executor (.await) ถึงเริ่มทำจริง",
+        "รันโค้ดทันทีใน thread ใหม่",
+        "รันโค้ดทันทีใน background แล้วคืนค่าตอนหลัง",
+        "คอมไพล์เป็นโค้ดธรรมดาเหมือน fn ปกติ"
+      ],
+      "answer": 0
+    },
+    "explain": "async fn = \"ระงับคำสั่งไว้\": เรียกแล้วได้ Future ที่ยังเฉย ๆ (lazy) — จนถูก await ถึงเริ่ม และพอเจอจุดรอ (I/O) ก็คืน thread ให้ runtime ไปทำงานอื่น — ต่างจากหลายภาษาที่ async เริ่มทำงานทันที — เขียน async ของ Rust แล้วลืม await = ไม่มีอะไรเกิดขึ้นเลย (warning: unused)",
+    "source": "บทเรียน Goose · Async — async fn"
+  },
+  {
+    "id": "q148",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "ทำไม Goose มี \"dedicated thread\" สำหรับบางงาน ทั้งที่ใช้ tokio runtime อยู่?",
+    "payload": {
+      "choices": [
+        "งานบางประเภท (blocking syscall, signal, spawn โปรแกรมภายนอก) ไปขวาง async worker ไม่ได้ — แยกเป็น thread เฉพาะแล้วส่งผลกลับทาง channel",
+        "thread ธรรมดาเร็วกว่า async เสมอ",
+        "tokio ใช้ได้แค่ครั้งละงาน",
+        "เพราะอยากได้ core CPU เฉพาะตัว"
+      ],
+      "answer": 0
+    },
+    "explain": "async runtime มี worker จำกัด — งานที่กินเวลาแบบ blocking (รอ process ลูก, จับ signal) ถ้ารันใน worker จะอุดตันงานอื่นทั้ง runtime — ทางแก้มาตรฐาน: งานพิเศษให้ thread เฉพาะ แล้วคุยกลับด้วย channel — \"เลือกเครื่องมือตามธรรมชาติของงาน\" ไม่ใช่ async ทุกอย่าง",
+    "source": "บทเรียน Goose · Async — Dedicated Thread"
+  },
+  {
+    "id": "q149",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (thread::scope ยืมข้อมูลโดยไม่ต้อง move)",
+    "payload": {
+      "code": "use std::thread;\nfn main() {\n    let data = vec![1, 2, 3];\n    let n = thread::scope(|s| {\n        let h = s.spawn(|| data.len());\n        h.join().unwrap()\n    });\n    println!(\"{}\", n);\n}",
+      "choices": [
+        "3",
+        "คอมไพล์ไม่ผ่าน ต้อง move หรือ Arc",
+        "0",
+        "พิมพ์เมื่อไหร่ก็ได้ ไม่แน่นอน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "3"
+      }
+    },
+    "explain": "thread::scope รับประกันว่าทุก thread ใน scope จบก่อนออกจาก scope — ข้อมูลของ main จึงยังมีชีวิตแน่นอน closure ยืมได้เลย ไม่ต้อง move/Arc — ทางเลือกใหม่กว่า (Rust 1.63+) สำหรับ parallel แบบ \"แชร์อ่านแล้วรอจบ\" — ผล: len ของ [1,2,3] = 3",
+    "source": "Cookbook · Concurrency — scoped threads"
+  },
+  {
+    "id": "q150",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "Graceful Shutdown ของ Goose — รอหลายสัญญาณพร้อมกัน แล้วค่อยเก็บกวาด — ลำดับที่ถูกต้องคือ?",
+    "payload": {
+      "choices": [
+        "รับสัญญาณยกเลิก (Ctrl-C/timeout) → หยุดรับงานใหม่ → แจ้งทุกส่วนผ่าน CancellationToken → รอ/เก็บกวาด state → ปิดท้ายสวย ๆ",
+        "ปิดโปรแกรมทันทีที่กด Ctrl-C เพื่อปลอดภัย",
+        "เก็บกวาดก่อนแล้วค่อยรอสัญญาณ",
+        "ส่ง kill -9 ให้ทุก thread"
+      ],
+      "answer": 0
+    },
+    "explain": "shutdown แบบสุภาพ: ได้สัญญาณแล้วไม่ดึงปลั๊กทันที แต่ (1) หยุดงานใหม่ (2) บอกทุกงานที่กำลังรันผ่าน cancellation token ให้เก็บกวาดตัวเอง (3) รอให้เสร็จ (timeout กำกับ) (4) flush log/save state แล้วจบ — สิ่งที่ควรมีในโปรแกรมรันยาวทุกตัว และ Goose ทำครบทั้งเส้นทาง",
+    "source": "บทเรียน Goose · Async — Graceful Shutdown"
+  }
+]

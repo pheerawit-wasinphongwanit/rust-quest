@@ -1,0 +1,294 @@
+[
+  {
+    "id": "q061", "type": "mcq", "cat": "memory", "diff": 1,
+    "prompt": "ใน Rust \"move\" หมายถึงอะไร?",
+    "payload": {
+      "choices": [
+        "โอนความเป็นเจ้าของข้อมูลให้ตัวแปรใหม่ — ตัวเดิมหมดสิทธิ์ใช้ทันที",
+        "ก๊อปข้อมูลไปอีกที่ ตัวเดิมยังใช้ได้",
+        "ย้ายข้อมูลไปไว้บน heap",
+        "ลบตัวแปรออกจาก scope"
+      ],
+      "answer": 0
+    },
+    "explain": "move = ส่งต่อความเป็นเจ้าของ (เหมือนส่งกุญแจบ้านให้คนอื่น แล้วเราไม่มีกุญแจ) — ตัวแปรเดิมใช้ต่อไม่ได้เพื่อกัน \"สองเจ้าของแก้ของชิ้นเดียวพร้อมกัน\" — เป็นหัวใจของ ownership ที่ไม่มีภาษาไหนทำแบบนี้ตรง ๆ",
+    "source": "พื้นฐาน ownership — move"
+  },
+  {
+    "id": "q062", "type": "output", "cat": "memory", "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (integer กับ move)",
+    "payload": {
+      "code": "fn main() {\n    let a = 5;\n    let b = a;\n    println!(\"{} {}\", a, b);\n}",
+      "choices": ["5 5", "คอมไพล์ไม่ผ่าน เพราะ a ถูกย้าย", "5 0", "0 5"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "5 5" }
+    },
+    "explain": "integer เป็นชนิด **Copy** — มีขนาดเล็ก ก๊อปค่าตอน assign ได้ถูกมาก compiler จึงก๊อปให้เลย ไม่ move ทั้งที่เป็น assignment เดียวกับ String — ชนิด Copy ได้แก่: integer, float, bool, char, และ tuple ที่ข้างในเป็น Copy ทั้งหมด",
+    "source": "พื้นฐาน ownership — Copy types"
+  },
+  {
+    "id": "q063", "type": "bug", "cat": "memory", "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn take(s: String) {\n    println!(\"รับ {}\", s);\n}\nfn main() {\n    let s = String::from(\"hi\");\n    take(s);\n    println!(\"{}\", s);\n}",
+      "choices": [
+        "error[E0382]: ส่ง s เข้าฟังก์ชัน = ย้ายความเป็นเจ้าของให้ take แล้ว ใช้ s ต่อไม่ได้",
+        "error[E0507]: cannot move out of `s`",
+        "error[E0106]: missing lifetime",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0382" }
+    },
+    "explain": "พารามิเตอร์ `s: String` (ไม่มี &) = ฟังก์ชันขอเป็นเจ้าของ — พอเรียก take(s) ความเป็นเจ้าของหายไป (และถูกทิ้งท้ายฟังก์ชัน) — ใช้ s อีก = E0382 · แก้ได้สามทาง: ส่ง `&s` (ยืมอ่าน), `&mut s` (ยืมแก้), หรือ `s.clone()` (ก๊อปให้เขา)",
+    "source": "พื้นฐาน ownership — move into function"
+  },
+  {
+    "id": "q064", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "อยากเรียก `print_len(s)` โดยที่ s ยังใช้งานต่อได้หลังเรียก — เขียน signature ของ print_len แบบไหน?",
+    "payload": {
+      "choices": [
+        "fn print_len(s: &String) — ยืมอ่าน ไม่ยึดความเป็นเจ้าของ",
+        "fn print_len(s: String) — รับค่าตรง ๆ",
+        "fn print_len(s: mut String)",
+        "fn print_len() -> String"
+      ],
+      "answer": 0
+    },
+    "explain": "& หน้าชนิด = ยืม (borrow) — ฟังก์ชันดูได้อย่างเดียว เจ้าของเดิมยังอยู่ — (สไตล์ Rust นิยม `&str` ยิ่งกว่า: รับได้ทั้ง &String และ literal ผ่าน deref coercion) — การเลือก & หรือค่าจริง คือการตัดสินใจเรื่องความเป็นเจ้าของที่ทำทุกครั้งที่เขียน signature",
+    "source": "พื้นฐาน ownership — borrow in signatures"
+  },
+  {
+    "id": "q065", "type": "fill", "cat": "memory", "diff": 2,
+    "prompt": "เติมเครื่องหมายเพื่อสร้าง \"การยืม\" (reference) ของ n",
+    "payload": {
+      "code": "let n = 10;\nlet v = ___n;\nprintln!(\"{} {}\", n, *v);",
+      "choices": ["&", "*", "&&", "#"],
+      "answer": 0,
+      "verify": { "kind": "fillCompiles" }
+    },
+    "explain": "`&n` สร้าง reference (การยืม) · `*v` คือ deref — ตามอ่านค่าที่ยืมมา — คู่สัญลักษณ์ &/* คือหัวใจของการยืมใน Rust เหมือน \"ขอยืม\" กับ \"เปิดดูของที่ยืมมา\"",
+    "source": "พื้นฐาน ownership — references"
+  },
+  {
+    "id": "q066", "type": "bug", "cat": "memory", "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut s = String::from(\"a\");\n    let a = &mut s;\n    let b = &mut s;\n    a.push('x');\n    b.push('y');\n}",
+      "choices": [
+        "error[E0499]: ยืม mutable ซ้อนกันสองตัวพร้อมกันไม่ได้ — ของชิ้นเดียว แก้ได้ทีละคน",
+        "error[E0502]: ยืมอ่านขณะมีการยืมเขียน",
+        "error[E0382]: borrow of moved value",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0499" }
+    },
+    "explain": "E0499 — &mut หลายตัวพร้อมกัน = คนแก้ของชิ้นเดียวพร้อมกัน (data race ในที่นั้นเอง) → ห้าม · กฎยืม: **อ่านได้หลายคนพร้อมกัน หรือ เขียนคนเดียว** — ตรงนี้ b ถูกใช้หลัง a จึงถือว่าซ้อน · แก้: ใช้ a ให้จบก่อนสร้าง b (NLL ปล่อยยืมให้อัตโนมัติเมื่อใช้ครั้งสุดท้าย)",
+    "source": "พื้นฐาน ownership — borrow rules"
+  },
+  {
+    "id": "q067", "type": "bug", "cat": "memory", "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![1];\n    let r = &v;\n    r.push(2);\n}",
+      "choices": [
+        "error[E0596]: r เป็น reference แบบอ่านอย่างเดียว — เรียก push (แก้ข้อมูล) ไม่ได้",
+        "error[E0384]: cannot assign twice to immutable variable",
+        "error[E0507]: cannot move out of `v`",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0596" }
+    },
+    "explain": "E0596 — `&v` ยืมแบบอ่าน แต่ `push` ต้องการ `&mut self` (แก้ข้อมูล) — อ่านอย่างเดียวแก้ของไม่ได้ · แก้: ยืม `&mut v` แทน (และ v ต้องประกาศ mut ไว้แล้ว — ตัวนี้มี) — compiler บอกตรง ๆ ว่าจุดไหนขอแก้ผ่านตัวที่อ่านได้อย่างเดียว",
+    "source": "พื้นฐาน ownership — immutable borrow"
+  },
+  {
+    "id": "q068", "type": "output", "cat": "memory", "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (ยืม mutable แล้วแก้)",
+    "payload": {
+      "code": "fn main() {\n    let mut s = String::from(\"go\");\n    let r = &mut s;\n    r.push_str(\"!\");\n    println!(\"{}\", r);\n}",
+      "choices": ["go!", "go", "คอมไพล์ไม่ผ่าน เพราะ s ถูกยืม", "คอมไพล์ไม่ผ่าน ต้องใช้ *r"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "go!" }
+    },
+    "explain": "`&mut s` ยืมแบบแก้ไขได้ → push_str เติม \"!\" → ได้ go! — method call ผ่าน reference มี auto-deref จึงไม่ต้องเขียน (*r).push_str(...) — เจ้าของ (s) ไม่หายไปไหน แค่ยืมสิทธิ์แก้ชั่วคราวให้ r",
+    "source": "พื้นฐาน ownership — mutable borrow"
+  },
+  {
+    "id": "q069", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "NLL (Non-Lexical Lifetimes) ช่วยอะไรในโค้ดแบบนี้: `let r = &s; println!(\"{}\", r); s.push('!');`",
+    "payload": {
+      "choices": [
+        "การยืมของ r สิ้นสุดที่การใช้ครั้งสุดท้าย (println) — หลังจากนั้น s แก้ไขได้ ไม่ชนกัน",
+        "ทำให้ reference มีอายุตลอด scope เสมอ จึงต้องระวังเป็นพิเศษ",
+        "ปิดการตรวจ borrow เพื่อความเร็ว",
+        "แปลง &s เป็น &mut s อัตโนมัติ"
+      ],
+      "answer": 0
+    },
+    "explain": "NLL ทำให้ compiler ดู \"การใช้งานจริง\" ไม่ใช่วงเล็บ — ยืม r ใช้ครั้งสุดท้ายที่ println การยืมจบเลย push ทีหลังไม่ชน — ถ้าไม่มี NLL โค้ดกลุ่มนี้ (ยืมก่อน-แก้ทีหลัง) จะ error ตลอด และ Rust จะเขียนยากโค้ดหนักมาก",
+    "source": "พื้นฐาน ownership — NLL"
+  },
+  {
+    "id": "q070", "type": "output", "cat": "memory", "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (clone)",
+    "payload": {
+      "code": "fn main() {\n    let a = String::from(\"x\");\n    let b = a.clone();\n    println!(\"{} {}\", a, b);\n}",
+      "choices": ["x x", "คอมไพล์ไม่ผ่าน เพราะ a ถูกย้าย", "x", "ก๊อปไม่สำเร็จ ได้ None"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "x x" }
+    },
+    "explain": "`clone()` ก๊อปข้อมูลจริง (สร้าง buffer ใหม่บน heap) — ได้สองเจ้าของอิสระต่อกัน ใช้ทั้งคู่ได้ — แลกมาด้วยต้นทุน: จองหน่วยความจำ+ก๊อป bytes — ใช้เมื่อจำเป็นจริง ๆ (เช่น ต้องส่งเข้าฟังก์ชันแต่ยังต้องใช้ต่อ)",
+    "source": "พื้นฐาน ownership — clone"
+  },
+  {
+    "id": "q071", "type": "fill", "cat": "memory", "diff": 2,
+    "prompt": "เติมเมธอดที่ก๊อป vector ให้เป็นอีกชุด (เจ้าของเดิมยังใช้ได้)",
+    "payload": {
+      "code": "let v = vec![1, 2];\nlet w = v.___();\nprintln!(\"{:?} {:?}\", v, w);",
+      "choices": ["clone", "copy", "dup", "ref"],
+      "answer": 0,
+      "verify": { "kind": "fillCompiles" }
+    },
+    "explain": "`clone()` — ก๊อปทั้งหัว (ptr/len/cap บน stack) และตัวข้อมูลบน heap เป็นชุดใหม่ · Vec ไม่ใช่ Copy (มี heap ต้องจัดการตอน drop) จึงไม่มีก๊อปฟรีแบบ integer — copy/dup ไม่มีใน Vec",
+    "source": "พื้นฐาน ownership — clone vs Copy"
+  },
+  {
+    "id": "q072", "type": "bug", "cat": "memory", "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let x = 1;\n    x = 2;\n}",
+      "choices": [
+        "error[E0384]: ตัวแปรไม่ได้ประกาศ mut — แก้ค่าใหม่ไม่ได้ (เพิ่ม let mut x)",
+        "error[E0382]: x ถูกย้ายไปแล้ว",
+        "error[E0308]: ชนิดไม่ตรง",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0384" }
+    },
+    "explain": "E0384 — Rust ตัวแปร immutable เป็นค่าเริ่มต้น: กำหนดครั้งเดียว ห้ามแก้ · อยากแก้ต้องขอตั้งแต่ประกาศ: `let mut x = 1;` — ความไม่เปลี่ยนแปลงเป็นค่าเริ่มต้นช่วยให้อ่านโค้ดรู้ว่าอะไรจะเปลี่ยน/ไม่เปลี่ยนโดยไม่ต้องไล่ทุกบรรทัด",
+    "source": "พื้นฐาน syntax — mutability"
+  },
+  {
+    "id": "q073", "type": "mcq", "cat": "memory", "diff": 1,
+    "prompt": "`let mut v = vec![1];` — คำว่า mut ทำหน้าที่อะไร?",
+    "payload": {
+      "choices": [
+        "อนุญาตให้เปลี่ยนค่าที่ v ผูกอยู่ (push/แก้ element) ได้",
+        "ทำให้ Vec โตได้ (ไม่มี mut ก็จองที่ไม่ได้)",
+        "ประกาศตัวแปรใหม่ซ้ำชื่อเดิมได้",
+        "ทำให้ข้อมูลปลอดภัยข้าม thread"
+      ],
+      "answer": 0
+    },
+    "explain": "mut ที่ตัวแปร = สิทธิ์แก้ไข **ค่าที่ผูกอยู่** — ไม่ใช่คุณสมบัติพิเศษของ Vec เอง (Vec โตได้เพราะโครงสร้างมันออกแบบมา แต่ต้องมี mut ถึงเรียกใช้) · ส่วนการประกาศชื่อซ้ำคือ shadowing — ไม่ต้อง mut ก็ได้",
+    "source": "พื้นฐาน syntax — mut"
+  },
+  {
+    "id": "q074", "type": "output", "cat": "memory", "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (shadowing เปลี่ยนชนิด)",
+    "payload": {
+      "code": "fn main() {\n    let x = \"5\";\n    let x: i32 = x.parse().unwrap();\n    println!(\"{}\", x + 1);\n}",
+      "choices": ["6", "51", "คอมไพล์ไม่ผ่าน ชนิดเปลี่ยนไม่ได้", "5"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "6" }
+    },
+    "explain": "shadowing: `let x` ซ้ำชื่อ = ประกาศ **ตัวแปรใหม่** ทับชื่อเดิม เปลี่ยนชนิดได้ด้วย (&str → i32) — ต่างจาก `mut` ที่ต้องคงชนิดเดิม — idiom ที่พบบ่อยมาก: รับ input เป็น String แล้ว shadow เป็นชนิดที่ต้องการใช้จริง",
+    "source": "พื้นฐาน syntax — shadowing"
+  },
+  {
+    "id": "q075", "type": "bug", "cat": "memory", "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn make<'a>() -> &'a String {\n    let s = String::from(\"hi\");\n    &s\n}\nfn main() {\n    let r = make();\n    println!(\"{}\", r);\n}",
+      "choices": [
+        "error[E0515]: คืน reference ที่ชี้ไปตัวแปรในฟังก์ชัน — ตัวแปรถูกทิ้งตอนจบฟังก์ชัน ชี้ไปหาอะไรที่ตายแล้ว",
+        "error[E0507]: cannot move out of `s`",
+        "error[E0106]: missing lifetime specifier",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0515" }
+    },
+    "explain": "E0515 — `&s` ชี้ไป String ที่อยู่ใน stack frame ของ make: จบฟังก์ชัน = frame และ String ถูกทำลาย reference จะชี้่หาความว่างเปล่า (dangling) — Rust จับได้ตอน compile เลย! · แก้: คืน String เจ้าของเอง (move ออกมา) แทนการยืม",
+    "source": "พื้นฐาน ownership — dangling reference"
+  },
+  {
+    "id": "q076", "type": "output", "cat": "memory", "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (ส่งต่อความเป็นเจ้าของเข้า-ออกฟังก์ชัน)",
+    "payload": {
+      "code": "fn grow(mut s: String) -> String {\n    s.push_str(\"!\");\n    s\n}\nfn main() {\n    let s = grow(String::from(\"hey\"));\n    println!(\"{}\", s);\n}",
+      "choices": ["hey!", "hey", "คอมไพล์ไม่ผ่าน ต้องใช้ &mut", "คอมไพล์ผ่าน แต่พิมพ์ว่างเปล่า"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "hey!" }
+    },
+    "explain": "รับ String (เป็นเจ้าของ) → แก้ได้อิสระไม่ต้องกังวลใครยืมอยู่ → คืน s (ส่งต่อความเป็นเจ้าของออกมา) — แพทเทิร์น consume-then-return ทำให้โค้ดปลอดภัยโดยไม่ต้องเขียน lifetime เลย — เสียแค่เจ้าของเดิม (ตัวเรียก) ต้องรับค่าคืนมาใช้ต่อ",
+    "source": "พื้นฐาน ownership — ownership transfer"
+  },
+  {
+    "id": "q077", "type": "mcq", "cat": "memory", "diff": 3,
+    "prompt": "เขียนพารามิเตอร์รับข้อความ — แบบไหน \"ยืดหยุ่นที่สุด\" สำหรับผู้เรียก?",
+    "payload": {
+      "choices": [
+        "fn f(s: &str) — รับได้ทั้ง &String (deref coercion) และ \"literal\"",
+        "fn f(s: String) — ผู้เรียกต้องเตรียมเจ้าของเสมอ",
+        "fn f(s: &String) — เหมือนกันทุกกรณีกับ &str",
+        "fn f(s: &mut String) — ยืดที่สุดเพราะแก้ได้ด้วย"
+      ],
+      "answer": 0
+    },
+    "explain": "&str คือมาตรฐานสากล (Goose ก็ใช้ &str ใน API เกือบทั้งเล่ม): ผู้เรียงมี String ก็ส่ง &s ได้, มี literal ก็ส่งได้เลย — &String ใช้ได้แต่คนเรียกต้องมี String จริง ๆ · (rule of thumb: &str เข้า, String ออก)",
+    "source": "พื้นฐาน ownership — API design"
+  },
+  {
+    "id": "q078", "type": "bug", "cat": "memory", "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let s = String::from(\"hi\");\n    let f = move || println!(\"{}\", s);\n    f();\n    println!(\"{}\", s);\n}",
+      "choices": [
+        "error[E0382]: closure แบบ move ยึดความเป็นเจ้าของ s ไปแล้ว — ข้างนอกใช้ s ต่อไม่ได้",
+        "error[E0502]: closure ยืม s ขณะแก้ไข",
+        "error[E0596]: cannot borrow as mutable",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0382" }
+    },
+    "explain": "`move ||` บังคับยึดทุกอย่างที่ใช้เป็นความเป็นเจ้าของ (จำเป็นสำหรับ thread::spawn ที่ต้อง 'static) — s ย้ายเข้า closure เป็นของ closure ไปแล้ว · แก้: ตัด move (closure ยืมแทน) หรือใช้ s.clone() ตอนสร้าง closure",
+    "source": "พื้นฐาน ownership — move closures"
+  },
+  {
+    "id": "q079", "type": "memory", "cat": "memory", "diff": 2,
+    "prompt": "ดูแผนภาพ: `let t = s;` เมื่อ s เป็น String — หลังบรรทัดนี้ใครใช้งานข้อมูลได้บ้าง?",
+    "payload": {
+      "svg": "mem2",
+      "choices": [
+        "มีแต่ t — s หมดสิทธิ์ทันที (ย้ายหัว ptr/len/cap ให้ t คนเดียว)",
+        "ทั้ง s และ t — ก๊อปหัวใหม่ให้กัน",
+        "มีแต่ s — t เป็นแค่ชื่อชั่วคราว",
+        "ไม่มีใคร — ข้อมูลถูกลบทันที"
+      ],
+      "answer": 0
+    },
+    "explain": "move ของ String = ก๊อป **หัว** (ptr/len/cap — 24 bytes บน stack) ให้ t แล้ว mark ว่า s ใช้ไม่ได้ — bytes บน heap **ไม่ก๊อป** (ยังก้อนเดิม) — เร็วและชัดเจน: คนเดียวเป็นเจ้าของ เมื่อ t ตายก็คืน heap ก้อนนั้นครั้งเดียว ไม่มี double-free",
+    "source": "พื้นฐาน ownership — move บนหน่วยความจำ"
+  },
+  {
+    "id": "q080", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "ชนิดข้อมูลกลุ่มไหนเป็น Copy (assign แล้วตัวเดิมยังใช้ได้)?",
+    "payload": {
+      "choices": [
+        "i32, f64, bool, char, (i32, i32)",
+        "String, Vec, i32, bool",
+        "ชนิดที่ประกาศ pub ทุกชนิด",
+        "ตัวเลขทุกชนิดรวม String ด้วย"
+      ],
+      "answer": 0
+    },
+    "explain": "Copy = ก๊อปถูก ๆ ทั้งก้อนได้ (stack ล้วน ไม่มี heap ต้องดูแล): ตัวเลข, bool, char, ตัวชี้แบบ shared ไม่นับ, tuple ที่สมาชิก Copy ครบ · String/Vec มี heap เก็บในการ drop ต้องวางแผน จึงเป็น Clone (ต้องเรียก .clone() เอง) ไม่ใช่ Copy",
+    "source": "พื้นฐาน ownership — Copy vs Clone"
+  }
+]

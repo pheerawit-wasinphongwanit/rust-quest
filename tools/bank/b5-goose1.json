@@ -1,0 +1,424 @@
+[
+  {
+    "id": "q099",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 1,
+    "prompt": "Goose ใช้ tagged enum (อย่าง MessageContentBlock) เก็บข้อความ/รูป/คำขอเครื่องมือ — ข้อดีเทียบกับ struct คืออะไร?",
+    "payload": {
+      "choices": [
+        "บังคับว่า \"เป็นอย่างใดอย่างหนึ่ง\" + match ต้องครบทุกแบบ — เพิ่ม variant ใหม่ compiler ชี้ทุกจุดที่ต้องอัพเดต",
+        "เก็บข้อมูลได้มากกว่า struct",
+        "เร็วกว่า struct เสมอเพราะอยู่บน stack",
+        "ไม่ต้องกังวลเรื่อง ownership"
+      ],
+      "answer": 0
+    },
+    "explain": "enum = \"ป้ายเดียวติดของชิ้นเดียว\" (sum type) — ข้อมูลผิดรูปแบบกันตั้งแต่ type system เช่น ไม่มีทางมี text กับ image พร้อมกันใน block เดียว · match ที่ compiler บังคับให้ครบ = refactor ปลอดภัย เพิ่ม variant แล้วลืมจุดไหน มันบอกหมด (E0004)",
+    "source": "บทเรียน Goose · Data Modeling — Tagged Enum"
+  },
+  {
+    "id": "q100",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (match ดึงข้อมูลจาก enum)",
+    "payload": {
+      "code": "enum Msg {\n    Text(String),\n    Ping(u32),\n}\nfn main() {\n    let m = Msg::Ping(7);\n    match m {\n        Msg::Text(t) => println!(\"ข้อความ {}\", t),\n        Msg::Ping(n) => println!(\"ปิง {}\", n),\n    }\n}",
+      "choices": [
+        "ปิง 7",
+        "Ping(7)",
+        "ข้อความ 7",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "ปิง 7"
+      }
+    },
+    "explain": "match + pattern ดึง payload ออกจาก enum ได้ในตัว: `Msg::Ping(n)` ผูก 7 เข้าตัวแปร n — รูปแบบเดียวกับ Goose ตอนแยกแยะ MessageContentBlock::Text/Image/ToolRequest — แต่ละแขนจัดการตามชนิดจริงของข้อมูล ผิดไม่ได้",
+    "source": "บทเรียน Goose · Data Modeling — Tagged Enum"
+  },
+  {
+    "id": "q101",
+    "type": "bug",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "enum Mood {\n    Happy,\n    Tired,\n}\nfn main() {\n    let m = Mood::Tired;\n    let s = match m {\n        Mood::Happy => \"ดี\",\n    };\n    let _ = s;\n}",
+      "choices": [
+        "error[E0004]: match ไม่ครบทุก variant — ลืม Mood::Tired (non-exhaustive)",
+        "error[E0308]: แขน match ต้องชนิดเดียวกันเสมอ",
+        "error[E0382]: m ถูกย้ายเข้า match",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0004"
+      }
+    },
+    "explain": "E0004 non-exhaustive patterns — match ต้องครบทุกแบบ (หรือมี `_`) — ดูเหมือนเข้มงวดแต่นี่คือเกราะ: เพิ่ม variant ใหม่วันนี้ ทุก match เดิมที่ยังไม่รองรับจะ error ทันที ไม่มี \"ลืมจัดการเงียบ ๆ\" — เหตุผลที่ Goose ปลอดภัยต่อการเติบโตของโค้ด",
+    "source": "บทเรียน Goose · Data Modeling — exhaustive match"
+  },
+  {
+    "id": "q102",
+    "type": "fill",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "เติมชื่อ trait ที่ทำให้พิมพ์ผ่าน {} ได้ (เหมือน Display ของ Goose)",
+    "payload": {
+      "code": "use std::fmt::Display;\nstruct Agent(&'static str);\nimpl ___ for Agent {\n    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {\n        write!(f, \"Agent {}\", self.0)\n    }\n}\nfn main() {\n    println!(\"{}\", Agent(\"goose\"));\n}",
+      "choices": [
+        "Display",
+        "Debug",
+        "ToString",
+        "Print"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "impl Display = สอน println! ว่าจะแสดงค่านี้กับมนุษย์อย่างไร (เรียก \"Agent goose\") — Goose implement Display ให้ข้อมูลเกือบทุกชนิดที่โดนพิมพ์ เพื่อ log/UI อ่านง่ายโดยไม่ต้องเขียนโค้ด format ซ้ำทุกจุด · Debug (จาก derive) คือฝั่งโปรแกรมเมอร์ {:?}",
+    "source": "บทเรียน Goose · Data Modeling — impl Display"
+  },
+  {
+    "id": "q103",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "ทำไม Goose เลือก implement Display ให้ข้อมูล แทนการเขียนเมธอด to_display_string() เองทีละจุด?",
+    "payload": {
+      "choices": [
+        "Display เป็นมาตรฐาน — ใช้ได้กับ {} ทุกที่ (println, format, write!, log) โดยไม่ต้องเรียกเมธอดพิเศษ",
+        "เร็วกว่าเพราะ compiler ปรับให้",
+        "Display บังคับให้ข้อมูล immutable",
+        "to_display_string ชื่อยาวไป"
+      ],
+      "answer": 0
+    },
+    "explain": "trait มาตรฐานเข้ากับระบบนิเวศทั้งภาษา: ที่ใดใช้ {} ได้ ข้อมูลเราก็พิมพ์สวยได้ — เขียนครั้งเดียวที่ impl ใช้ได้ทั้ง println!, format!, eprintln!, ไลบรารี log — นี่คือพลังของ \"สัญญามาตรฐาน\" ที่ trait ให้",
+    "source": "บทเรียน Goose · Data Modeling — impl Display"
+  },
+  {
+    "id": "q104",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (fluent setter แบบ Goose AgentConfig)",
+    "payload": {
+      "code": "struct Conf {\n    model: String,\n    temp: f32,\n}\nimpl Conf {\n    fn new(model: &str) -> Self {\n        Conf { model: model.into(), temp: 0.0 }\n    }\n    fn with_temp(mut self, t: f32) -> Self {\n        self.temp = t;\n        self\n    }\n}\nfn main() {\n    let c = Conf::new(\"gpt\").with_temp(0.5);\n    println!(\"{} {}\", c.model, c.temp);\n}",
+      "choices": [
+        "gpt 0.5",
+        "gpt 0",
+        "คอมไพล์ไม่ผ่าน",
+        "ยังใช้ไม่ได้ เพราะ new ไม่คืน Self"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "gpt 0.5"
+      }
+    },
+    "explain": "สูตร with_* 3 จุด: รับ `mut self` (ยึดทั้งก้อนมาแก้) → ตั้งค่า → คืน `self` — โซ่ต่อกันได้: new().with_temp().with_x()... อ่านเป็นประโยคเดียว — Goose ใช้แทน derive Builder เพราะควบคุม validation และ default ได้ตรงจุด",
+    "source": "บทเรียน Goose · Data Modeling — Fluent Setter"
+  },
+  {
+    "id": "q105",
+    "type": "bug",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "fluent setter ตัวนี้พังตรงไหน?",
+    "payload": {
+      "code": "struct Conf {\n    temp: f32,\n}\nimpl Conf {\n    fn new() -> Self {\n        Conf { temp: 0.0 }\n    }\n    fn with_temp(mut self, t: f32) -> Self {\n        self.temp = t;\n    }\n}\nfn main() {\n    let c = Conf::new().with_temp(0.5);\n    let _ = c;\n}",
+      "choices": [
+        "error[E0308]: ฟังก์ชันบอกว่าคืน Self แต่บรรทัดสุดท้ายไม่มี self — ลืมคืน self (ผิดประเภท)",
+        "error[E0382]: self ถูกย้ายก่อนตั้งค่า",
+        "error[E0596]: self ไม่ใช่ mut",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0308"
+      }
+    },
+    "explain": "ปิดวงเล็บฟังก์ชันด้วย `self.temp = t;` ทำให้ Rust ถือว่าคืน **() ไม่ใช่ Self** — E0308 — บั๊กคลาสสิกของ with_* (M1 ของเกมนี้ก็มีข้อ E0609 อีกรูปแบบ) — จำ: บรรทัดสุดท้ายของ with_* ต้องเป็น `self` เปล่า ๆ",
+    "source": "บทเรียน Goose · Data Modeling — Fluent Setter"
+  },
+  {
+    "id": "q106",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "trait มี default method (เมธอดที่เขียนเนื้อจริงไว้ให้แล้ว) — Goose ใช้ท่านี้ทำอะไร?",
+    "payload": {
+      "choices": [
+        "เขียน flow หลักไว้ใน trait (Template Method) — implementor แค่ override จุดที่ต่างกัน",
+        "บังคับให้ทุกคน implement เหมือนกันหมด",
+        "ทำให้ trait รันได้เร็วขึ้น",
+        "แทนที่การใช้ struct ได้ทั้งหมด"
+      ],
+      "answer": 0
+    },
+    "explain": "default method = \"แม่แบบมีขั้นตอนรออยู่ คนเสียบมาแตะเฉพาะจุดที่เป็นเอกลักษณ์\" — Goose ทำกับ Provider/Extension: flow กลาง (retry, format, timing) อยู่ใน trait ค่าเริ่มต้น ผู้ implement เจาะเฉพาะ call จริง — โค้ดกลางแก้ที่เดียว ทุก implementor ได้ประโยชน์ทันที",
+    "source": "บทเรียน Goose · Trait — Default Method (Template Method)"
+  },
+  {
+    "id": "q107",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (default method เรียกเมธอดที่ถูก override)",
+    "payload": {
+      "code": "trait Greeter {\n    fn name(&self) -> String;\n    fn hello(&self) -> String {\n        format!(\"สวัสดี ฉัน {}\", self.name())\n    }\n}\nstruct Bot;\nimpl Greeter for Bot {\n    fn name(&self) -> String { \"goose\".into() }\n}\nfn main() {\n    println!(\"{}\", Bot.hello());\n}",
+      "choices": [
+        "สวัสดี ฉัน goose",
+        "สวัสดี ฉัน Bot",
+        "คอมไพล์ไม่ผ่าน ต้อง implement hello ด้วย",
+        "สวัสดี ฉัน "
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "สวัสดี ฉัน goose"
+      }
+    },
+    "explain": "Bot implement แค่ name() — hello() ใช้ของ trait ที่เขียน template ไว้ แล้ว **เรียก name() ผ่าน self ตัวจริง** จึงได้ \"goose\" — นี่คือกลไก Template Method ใน Rust: flow อยู่ที่ trait ข้อมูลอยู่ที่ implementor",
+    "source": "บทเรียน Goose · Trait — Default Method"
+  },
+  {
+    "id": "q108",
+    "type": "fill",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "เติมชื่อฟังก์ชันสร้าง Box ของ trait object (แบบ Box<dyn Provider> ใน Goose)",
+    "payload": {
+      "code": "trait Speak {\n    fn hi(&self) -> String;\n}\nstruct Bot;\nimpl Speak for Bot {\n    fn hi(&self) -> String { \"beep\".into() }\n}\nfn main() {\n    let v: Box<dyn Speak> = Box::___(Bot);\n    println!(\"{}\", v.hi());\n}",
+      "choices": [
+        "new",
+        "from",
+        "make",
+        "of"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`Box::new(Bot)` บรรจุ Bot ขึ้น heap แล้วเก็บเป็น trait object `Box<dyn Speak>` — ตอนนี้ v เรียก hi() ได้โดยไม่สน concrete type ข้างใน — รูปแบบเดียวกับ Goose ที่เก็บ provider ทุกยี่ห้อเป็น Arc<dyn Provider>",
+    "source": "บทเรียน Goose · Trait — Trait Object Arc<dyn Trait>"
+  },
+  {
+    "id": "q109",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "ทำไมต้องเก็บเป็น `Box<dyn Provider>` / `Arc<dyn Provider>` — ใช้ `Provider` ตรง ๆ ไม่ได้เหรอ?",
+    "payload": {
+      "choices": [
+        "เพราะชนิดจริงของ provider รู้ตอนรัน (OpenAI/Anthropic/...) — dyn คือ \"รู้แค่สัญญา\" จึงเก็บหลายยี่ห้อในตัวแปรชนิดเดียวได้",
+        "เพราะ dyn เร็วกว่าเสมอ",
+        "เพราะ Provider ขนาดใหญ่เกิน stack",
+        "dyn ทำให้ implement ง่ายขึ้น"
+      ],
+      "answer": 0
+    },
+    "explain": "`impl Provider` (static dispatch) ต้องรู้ชนิดตอน compile — แต่ระบบ plugin อย่าง Goose โหลด provider ตามคอนฟิกผู้ใช้ รู้ไม่ได้ล่วงหน้า → ต้อง dyn (dynamic dispatch ผ่านตาราง vtable) — จ่ายค่า dispatch นิดหน่อยแลกกับความยืดหยุ่นที่ต้องการจริง",
+    "source": "บทเรียน Goose · Trait — Trait Object Arc<dyn Trait>"
+  },
+  {
+    "id": "q110",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "หลักการจัดการ error ของ Goose: thiserror ไว้ที่ boundary ส่วน anyhow ใช้ใน interior — แปลว่าอะไร?",
+    "payload": {
+      "choices": [
+        "ขอบของ crate/โมดูล ส่งออก error ชนิดเจาะจง (แยกแยะได้ ให้ผู้ใช้ match) — ข้างในใช้ error กลาง ๆ พร้อม context สะดวกเขียน",
+        "thiserror สำหรับ panic ทั้งโปรแกรม anyhow สำหรับ warning",
+        "ใช้ anyhow ทุกที่ จะได้ไม่ต้อง define error",
+        "thiserror ดัก error ภายนอก anyhow ดัก bug ภายใน"
+      ],
+      "answer": 0
+    },
+    "explain": "สองชั้นตามผู้ใช้ของ error: **ผู้ใช้ API ของเรา** (ต้อง match รู้สาเหตุเจาะจง → thiserror สร้าง enum error พร้อม #[from]) · **โค้ดเราเองข้างใน** (อยากได้ context เร็ว ไม่ต้องแยกชนิด → anyhow โยนต่อ + .context(\"ทำอะไรอยู่\")) — อย่าสลับ: API ที่คืน anyhow ทำให้ผู้ใช้ match ไม่ได้",
+    "source": "บทเรียน Goose · Error Handling — thiserror/anyhow"
+  },
+  {
+    "id": "q111",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (error enum มือเปล่าสไตล์ thiserror)",
+    "payload": {
+      "code": "enum AppError {\n    NotFound(String),\n    Denied,\n}\nfn find(id: u32) -> Result<String, AppError> {\n    if id == 1 { Ok(\"goose\".into()) } else { Err(AppError::NotFound(format!(\"id {}\", id))) }\n}\nfn main() {\n    match find(2) {\n        Ok(s) => println!(\"เจอ {}\", s),\n        Err(AppError::NotFound(m)) => println!(\"ไม่เจอ: {}\", m),\n        Err(AppError::Denied) => println!(\"ห้าม\"),\n    }\n}",
+      "choices": [
+        "ไม่เจอ: id 2",
+        "Err(NotFound(id 2))",
+        "ไม่เจอ: id 1",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "ไม่เจอ: id 2"
+      }
+    },
+    "explain": "error เป็น enum เหมือนข้อมูลอื่น: NotFound พกข้อความ มาไหน match ดึงออกใช้ — นี่คือหัวใจของ thiserror (ที่เพิ่มคือ derive ให้ Display/Error อัตโนมัติ) — ผู้เรียกเห็นทางเลือกชัดเจน: เจอ/ไม่เจอพร้อมรายละเอียด/ถูกปฏิเสธ รู้ครบไม่มีหลุด",
+    "source": "บทเรียน Goose · Error Handling — error categories"
+  },
+  {
+    "id": "q112",
+    "type": "bug",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร? (โปรดสังเกตชนิด error สองชั้น)",
+    "payload": {
+      "code": "fn inner() -> Result<i32, String> {\n    Err(\"ล้มเหลว\".into())\n}\nfn outer() -> Result<i32, std::io::Error> {\n    let v = inner()?;\n    Ok(v)\n}\nfn main() {\n    let _ = outer();\n}",
+      "choices": [
+        "error[E0277]: ใช้ `?` โยน String ต่อในฟังก์ชันที่คืน io::Error ไม่ได้ — ไม่มี From<String> สำหรับ io::Error ให้แปลงอัตโนมัติ",
+        "error[E0382]: String ถูกย้ายก่อนส่งคืน",
+        "error[E0308]: `?` ใช้กับ Result ไม่ได้",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0277"
+      }
+    },
+    "explain": "`?` ทำงานได้เมื่อ error ของฟังก์ชันข้างใน **แปลงเป็น** error ของฟังก์ชันข้างนอกได้ (ผ่าน From) — io::Error ไม่รู้จัก String จึง E0277 · แก้: ให้ outer คืน error เดิม String, หรือ define AppError ที่ impl From<String> (นี่คือสิ่งที่ thiserror #[from] ทำให้อัตโนมัติ)",
+    "source": "บทเรียน Goose · Error Handling — From & ? operator"
+  },
+  {
+    "id": "q113",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Exponential Backoff + Jitter (แบบ Goose configurable) — jitter สุ่มเติมทุกครั้งทำเพื่ออะไร?",
+    "payload": {
+      "choices": [
+        "กันทุก client retry พร้อมกันเป๊ะ ๆ (thundering herd) — กระจายเวลาให้เฉลี่ยออก",
+        "ทำให้การ retry เร็วขึ้นโดยรวม",
+        "ลดจำนวนครั้งที่ต้อง retry",
+        "ป้องกัน memory leak"
+      ],
+      "answer": 0
+    },
+    "explain": "backoff เพิ่มเวลารอทวีคูณ (1s, 2s, 4s...) แต่ถ้าทุกคนคิดเลขเดียวกัน ทุกคนพุ่งเข้า server พร้อมกันทุกรอบ — jitter สุ่มเติมให้แต่ละ client ต่างเวลากัน กระจายโหลด — รายละเอียดเหล่านี้ Goose ทำเป็น config ได้ (backoff configurable)",
+    "source": "บทเรียน Goose · Error Handling — Exponential Backoff + Jitter"
+  },
+  {
+    "id": "q114",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (retry loop แบบ backoff)",
+    "payload": {
+      "code": "fn main() {\n    let mut delay = 1;\n    let mut tries = 0;\n    while tries < 3 {\n        tries += 1;\n        if tries == 3 {\n            break;\n        }\n        delay *= 2;\n    }\n    println!(\"สำเร็จรอบ {} delay {}\", tries, delay);\n}",
+      "choices": [
+        "สำเร็จรอบ 3 delay 4",
+        "สำเร็จรอบ 3 delay 1",
+        "สำเร็จรอบ 2 delay 4",
+        "ลูปไม่จบ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "สำเร็จรอบ 3 delay 4"
+      }
+    },
+    "explain": "พลาด 2 รอบแรก (delay 1→2→4 ทวีคูณ) รอบ 3 สำเร็จ break — โครง retry จริงของ Goose ซับซ้อนกว่า (สุ่ม jitter + config) แต่แกนคือ: นับครั้ง, รอทวีคูณ, จบเมื่อสำเร็จ/ครบโควตา",
+    "source": "บทเรียน Goose · Error Handling — Backoff"
+  },
+  {
+    "id": "q115",
+    "type": "order",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "เรียงบรรทัดให้เป็น operation pipeline มินิมัล (trait กำหนดสัญญา → struct → impl → เรียกใช้ พิมพ์ 42)",
+    "payload": {
+      "lines": [
+        "trait Op { fn run(&self, i: i32) -> i32; }",
+        "struct Double;",
+        "impl Op for Double { fn run(&self, i: i32) -> i32 { i * 2 } }",
+        "fn main() { println!(\"{}\", Double.run(21)); }"
+      ],
+      "answer": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "verify": {
+        "kind": "orderOutput",
+        "expected": "42"
+      }
+    },
+    "explain": "ลำดับสถาปัตยกรรมที่ Rust บังคับ: ประกาศ trait (สัญญา) ก่อน → struct ข้อมูล → impl trait ให้ struct → โค้ดใช้งาน — โครงเดียวกับ State Machine Pipeline ของ Goose (Operation trait + default Noop) ที่ต่อขั้นตอนเป็นสายพาน",
+    "source": "บทเรียน Goose · Metaprogramming — State Machine Pipeline"
+  },
+  {
+    "id": "q116",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "Null Object default (อย่าง Noop ใน pipeline ของ Goose) คือการทำอะไร?",
+    "payload": {
+      "choices": [
+        "สร้าง object ที่ \"ไม่ทำอะไร\" ใช้แทน None — ผู้เรียกไม่ต้อง if/unwrap ทุกจุด โค้ดเรียบขึ้น",
+        "คืน null ให้ผู้เรียกจัดการเอง",
+        "panic ทันทีเมื่อขั้นตอนว่าง",
+        "ลัดขั้นตอนที่เหลือทั้งหมด"
+      ],
+      "answer": 0
+    },
+    "explain": "แทนที่จะมี Option<Op> แล้วทุก caller เช็ค if let ก่อนเรียก ก็สร้าง Noop ที่ implement Op โดย return ค่าเดิมตรง ๆ — \"ทุกขั้นเป็น Op เสมอ\" โค้ด pipeline ไม่มีทางแยก — ลดจุด panic/unwrap และทำให้ compose ง่าย",
+    "source": "บทเรียน Goose · Metaprogramming — Null Object"
+  },
+  {
+    "id": "q117",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Goose ใช้ OnceLock/LazyLock เก็บ global config — ข้อดีเทียบกับ static mut หรือ init ทุกครั้งคือ?",
+    "payload": {
+      "choices": [
+        "สร้างครั้งเดียวครั้งแรกที่ใช้ (lazy) ปลอดภัยข้าม thread โดยไม่ต้องล็อกเอง",
+        "เร็วกว่า heap ทุกกรณี",
+        "ไม่ต้องประกาศชนิดข้อมูล",
+        "ทำให้โค้ดทดสอบง่ายขึ้นเสมอ"
+      ],
+      "answer": 0
+    },
+    "explain": "static mut เป็น unsafe (หลาย thread เขียนพร้อมกัน = data race) · init ทุกครั้งเปลือง — OnceLock ให้ทั้งสองอย่าง: ค่าแรกที่เข้าไป set ชนะ คนอื่นได้ค่าเดียวกัน ปลอดภัยอัตโนมัติ — โมเดลสมอง: \"ห้องน้ำสาธารณะที่ประตูล็อกให้คนแรกจนเสร็จ\"",
+    "source": "บทเรียน Goose · Metaprogramming — OnceLock lazy singleton"
+  },
+  {
+    "id": "q118",
+    "type": "output",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (OnceLock เรียกสองครั้ง)",
+    "payload": {
+      "code": "use std::sync::OnceLock;\nstatic CFG: OnceLock<u32> = OnceLock::new();\nfn main() {\n    let a = CFG.get_or_init(|| 42);\n    let b = CFG.get_or_init(|| 99);\n    println!(\"{} {}\", a, b);\n}",
+      "choices": [
+        "42 42",
+        "42 99",
+        "99 42",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "42 42"
+      }
+    },
+    "explain": "get_or_init ครั้งแรกรัน closure ได้ 42 และ **ตรึงค่าถาวร** — ครั้งที่สอง closure ไม่ถูกเรียกเลย ได้ 42 เหมือนเดิม — หลักคิดเดียวกับ Config::global() ของ Goose: คอนฟิกถูกสร้างครั้งเดียวตั้งแต่จุดแรกแล้วทุกคนแชร์ค่าเดียวกัน",
+    "source": "บทเรียน Goose · Metaprogramming — OnceLock"
+  }
+]

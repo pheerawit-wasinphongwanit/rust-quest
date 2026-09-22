@@ -1,0 +1,360 @@
+[
+  {
+    "id": "q119",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 1,
+    "prompt": "macro_rules! ต่างจาก fn ตรงไหน?",
+    "payload": {
+      "choices": [
+        "macro สร้าง/แปลงโค้ดตอน compile (เขียน Rust ที่เขียน Rust) รับจำนวน argument ได้ยืดหยุ่น",
+        "macro รันเร็วกว่า fn เพราะ inline",
+        "macro ใช้ได้เฉพาะตอน release build",
+        "fn ต้องมีชนิดข้อมูล macro ไม่ต้องมีโค้ด"
+      ],
+      "answer": 0
+    },
+    "explain": "macro = แม่แบบโค้ด: รับ pattern แล้วแตกออกเป็นโค้ดจริงก่อน compile — เลยยืดหยุ่นกว่า fn (จำนวน/รูปร่าง argument ผันได้ เช่น println!, vec!, format!) — Goose ใช้ declarative macro สร้าง typed config ทั้งชุดจากประโยคเดียว",
+    "source": "บทเรียน Goose · Metaprogramming — Declarative Macro"
+  },
+  {
+    "id": "q120",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (macro แบบง่าย)",
+    "payload": {
+      "code": "macro_rules! twice {\n    ($e:expr) => {\n        $e;\n        $e;\n    };\n}\nfn main() {\n    let mut n = 0;\n    twice!(n += 1);\n    println!(\"{}\", n);\n}",
+      "choices": [
+        "2",
+        "1",
+        "0",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "2"
+      }
+    },
+    "explain": "`twice!(n += 1)` ขยายเป็น `n += 1; n += 1;` ก่อน compile — โค้ดถูก \"พิมพ์ซ้ำ\" ให้เอง ได้ 2 — เห็นแก่นของ macro ชัดที่สุด: จับ pattern $e แล้วแทนที่ตามแม่แบบ (จงใจเขียน call แบบ `twice!(...)` ไม่มี semicolon ข้างใน เพราะ $e จับแค่ expression เดียว)",
+    "source": "บทเรียน Goose · Metaprogramming — macro_rules!"
+  },
+  {
+    "id": "q121",
+    "type": "fill",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "เติมในแม่แบบ macro ให้ square ยกกำลังสองถูกต้อง (พิมพ์ 36)",
+    "payload": {
+      "code": "macro_rules! sq {\n    ($e:expr) => { $e * ___ };\n}\nfn main() {\n    let v = sq!(6);\n    println!(\"{}\", v);\n}",
+      "choices": [
+        "$e",
+        "$x",
+        "e",
+        "$arg"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "ตัวแปร macro ต้องเรียกชื่อเดียวกับที่จับไว้: `$e` ถูกจับ → ใช้ `$e` ทั้งสองจุด = 6 * 6 = 36 — ตัวอื่น ($x, e, $arg) ไม่มีอยู่ จะ compile ไม่ผ่าน — สังเกต $ คือธงของ \"ตัวแปร macro\" ไม่ใช่ตัวแปรปกติ",
+    "source": "บทเรียน Goose · Metaprogramming — macro rules"
+  },
+  {
+    "id": "q122",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "สถาปัตยกรรม Event-Driven ของ Goose (AgentEvent + Emitter) — ข้อดีคือ?",
+    "payload": {
+      "choices": [
+        "ผู้ผลิตเหตุการณ์กับผู้บริโภค (UI, log, analytics) แยกกัน — เพิ่ม/ถอดผู้ฟังโดยไม่แก้โค้ดแหล่งเหตุการณ์",
+        "โค้ดเร็วขึ้นเพราะใช้ event",
+        "ไม่ต้องจัดการ error อีกต่อไป",
+        "ทำให้ทุกฟังก์ชัน async อัตโนมัติ"
+      ],
+      "answer": 0
+    },
+    "explain": "Agent ระดับแกนกลาง (start, message, tool) ปล่อย event ผ่าน emitter — UI ฟังวาดหน้าจอ, logger ฟังเขียนไฟล์, telemetry ฟังส่งขึ้นเมฆ: ทั้งหมดเสียบ/ถอดได้อิสระ — แหล่งเหตุการณ์ไม่รู้จักผู้ฟังเลย (loose coupling) คือหัวใจของสถาปัตยกรรมนี้",
+    "source": "บทเรียน Goose · Async — Event-Driven Core"
+  },
+  {
+    "id": "q123",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "หลัก \"เลือก channel ตามความหมายของข้อมูล\" — UI อยากรู้ \"ค่าปัจจุบันล่าสุด\" ของสถานะ (เก่าไม่สำคัญ) ใช้ channel แบบไหน?",
+    "payload": {
+      "choices": [
+        "watch — เก็บค่าล่าสุดค่าเดียว มาใหม่ทับเก่า ผู้มาช้าก็เห็นค่าปัจจุบันทันที",
+        "mpsc — ต่อคิวทีละข้อความ ไม่พลาดสักข้อ",
+        "broadcast — ทุกคนต้องได้ทุกข้อความตั้งแต่ต้น",
+        "ไม่ต้องใช้ channel เขียนไฟล์แล้วอ่านกลับ"
+      ],
+      "answer": 0
+    },
+    "explain": "watch = \"กระดานไฟป้าย\": เห็นแค่ค่าล่าสุด ตัวใหม่ทับเก่า เหมาะสถานะ/ความคืบหน้า · mpsc = \"สายพานส่งของ\" ทีละชิ้นไม่หล่น เหมาะงานที่ข้อความทุกข้อสำคัญ · broadcast = \"วิทยุ\" หลายผู้รับพร้อมกัน — เลือกตาม **ความหมายของข้อมูล** ไม่ใช่ความคุ้นเคย",
+    "source": "บทเรียน Goose · Async — เลือก channel ตามความหมาย"
+  },
+  {
+    "id": "q124",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "Goose ใช้ interval + MissedTickBehavior::Skip ตอน batch output — มันแก้ปัญหาอะไร?",
+    "payload": {
+      "choices": [
+        "ตอนโปรแกรมติดขัดแล้วมาต่อ ไม่ต้องไล่ยิง tick ที่ค้างทั้งหมด — ข้ามไป tick ถัดไปเลย (กัน backpressure สะสม)",
+        "ทำให้ interval แม่นยำระดับนาโนวินาที",
+        "หยุดโปรแกรมเมื่อ output ช้าเกิน",
+        "รวมข้อความซ้ำให้เหลืออันเดียว"
+      ],
+      "answer": 0
+    },
+    "explain": "interval ปกติ: ถ้า consumer ติด 1 วิ แต่ tick ทุก 10ms เมื่อคลายจะยิง catch-up รัว ๆ (100 ครั้งพร้อมกัน) — Skip = ข้าม tick ที่พลาดไป รอ tick ใหม่ — ระบบ streaming ของ Goose ใช้คู่กับ batching เพื่อ UI ลื่นแม้โหลดหนัก",
+    "source": "บทเรียน Goose · Async — Backpressure/Batching"
+  },
+  {
+    "id": "q125",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Type-erased Handler Registry ของ Goose — โครงสร้างข้อมูลหลักคืออะไร?",
+    "payload": {
+      "choices": [
+        "HashMap<String, Arc<dyn Handler>> — ตารางชื่อ → ตัวจัดการ (ไม่รู้ชนิดจริง รู้แค่สัญญา)",
+        "Vec<Handler> — เก็บทุก handler เรียงลำดับ",
+        "ตัวแปร static หนึ่งตัวต่อ handler",
+        "match ยักษ์กับชื่อ handler ใน main"
+      ],
+      "answer": 0
+    },
+    "explain": "registry = สมุดโทรศัพท์: คีย์เป็นชื่อ ค่าเป็น trait object — เพิ่ม handler ใหม่ = ลงทะเบียนหนึ่งบรรทัด ไม่ต้องแก้ match กลาง — เทคนิคเดียวกับ extension system ของ Goose ที่โหลดปลั๊กอินตามชื่อ",
+    "source": "บทเรียน Goose · Trait — Type-erased Handler Registry"
+  },
+  {
+    "id": "q126",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Blanket impl คืออะไร?",
+    "payload": {
+      "choices": [
+        "implement trait ให้ **ทุก type ที่มีเงื่อนไข** เช่น impl<T: Display> MyTrait for T — ไม่ต้อง impl ทีละ type",
+        "implement ให้ทุก type โดยไม่มีเงื่อนไขเลย",
+        "ลบ impl เดิมทั้งหมดแล้วเขียนใหม่",
+        "implement ให้แค่ type ใน crate เดียวกัน"
+      ],
+      "answer": 0
+    },
+    "explain": "blanket = \"ผ้าห่มคลุมทุกตัวที่ผ่านเงื่อนไข\": เขียนครั้งเดียวทุก type ที่ implement Display ได้ความสามารถใหม่อัตโนมัติ — Goose ใช้เพิ่มความสามารถให้ implementor ทั้งปวงโดยไม่แตะ trait เดิม — ข้อควรระวัง: ครอบกว้างมากจะชนกับ impl อื่น (coherence)",
+    "source": "บทเรียน Goose · Trait — Blanket Impl"
+  },
+  {
+    "id": "q127",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (blanket impl ทำงาน)",
+    "payload": {
+      "code": "trait Speak {\n    fn speak(&self) -> String;\n}\ntrait Loud {\n    fn loud(&self) -> String;\n}\nimpl<T: Speak> Loud for T {\n    fn loud(&self) -> String {\n        self.speak().to_uppercase()\n    }\n}\nstruct Cat;\nimpl Speak for Cat {\n    fn speak(&self) -> String { \"meow\".into() }\n}\nfn main() {\n    println!(\"{}\", Cat.loud());\n}",
+      "choices": [
+        "MEOW",
+        "meow",
+        "คอมไพล์ไม่ผ่าน Cat ไม่ได้ impl Loud",
+        "คอมไพล์ผ่าน แต่ loud() คืนค่าว่าง"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "MEOW"
+      }
+    },
+    "explain": "Cat implement แค่ Speak — แต่ blanket impl มอบ Loud ให้ทุก T: Speak อัตโนมัติ → Cat.loud() ได้ MEOW โดยไม่เคยเขียน impl Loud for Cat เลย — พลังของ \"ครอบทีเดียว ครบทุกตัว\"",
+    "source": "บทเรียน Goose · Trait — Blanket Impl"
+  },
+  {
+    "id": "q128",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Associated Constants ใน trait (เช่น const NAME) — Goose ใช้ประโยชน์แบบไหน?",
+    "payload": {
+      "choices": [
+        "ให้ทุก implementor ประกาศค่าคงที่ของตัวเอง (ชื่อ/รุ่น) แล้ว trait เรียกใช้ผ่าน Self::CONST — trait รู้จักตัวเองโดยไม่ต้องมี instance",
+        "เก็บค่าที่เปลี่ยนตลอดเวลาได้",
+        "ทำให้ประหยัด memory เพราะไม่ต้องสร้าง object",
+        "แทนที่ตัวแปร global ทั้งโปรแกรม"
+      ],
+      "answer": 0
+    },
+    "explain": "const ใน trait = ช่องกรอกที่ \"ต่อ type\" — เช่น Provider กำหนด const DEFAULT_MODEL แล้วแต่ละราย (OpenAI/Anthropic) ใส่ค่าตัวเอง — โค้ดกลางเรียก Self::DEFAULT_MODEL ได้แม้ยังไม่มี instance — compile-time รู้ค่าทันที ไม่มีค่าใช้จ่ายรันไทม์",
+    "source": "บทเรียน Goose · Trait — Associated Constants"
+  },
+  {
+    "id": "q129",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (associated const + default method)",
+    "payload": {
+      "code": "trait Provider {\n    const NAME: &'static str;\n    fn label(&self) -> String {\n        format!(\"[{}]\", Self::NAME)\n    }\n}\nstruct OpenAI;\nimpl Provider for OpenAI {\n    const NAME: &'static str = \"openai\";\n}\nfn main() {\n    println!(\"{}\", OpenAI.label());\n}",
+      "choices": [
+        "[openai]",
+        "[OpenAI]",
+        "[]",
+        "คอมไพล์ไม่ผ่าน ต้อง impl label ด้วย"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[openai]"
+      }
+    },
+    "explain": "OpenAI กรอกแค่ NAME — label() ของ trait ใช้ Self::NAME ได้เลย ได้ \"[openai]\" — ผสมกลไกสองตัว: associated const (ค่าต่อ type) + default method (flow กลาง) — โครงเดียวกับ provider ของ Goose ที่ label มาตรฐานแต่ชื่อต่างกันตามราย",
+    "source": "บทเรียน Goose · Trait — Associated Constants"
+  },
+  {
+    "id": "q130",
+    "type": "bug",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "struct Agent(&'static str);\nfn main() {\n    let s = format!(\"{}\", Agent(\"goose\"));\n    println!(\"{}\", s);\n}",
+      "choices": [
+        "error[E0277]: Agent ไม่ได้ implement Display — ใช้กับ {} ไม่ได้ (ต้อง impl เอง หรือใช้ {:?} + derive Debug)",
+        "error[E0507]: Agent ถูกย้ายเข้า format!",
+        "error[E0382]: borrow of moved value",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0277"
+      }
+    },
+    "explain": "{} เรียก Display, {:?} เรียก Debug — ไม่มีอันไหน ไม่พิมพ์ (E0277) — struct ธรรมดาไม่มี Display อัตโนมัติเพราะ Rust ไม่เดาว่าคุณอยากแสดงอะไร — แก้: derive(Debug) + {:?} สำหรับ dev หรือ impl Display สำหรับผู้ใช้จริง (แนวทาง Goose)",
+    "source": "บทเรียน Goose · Data Modeling — Display vs Debug"
+  },
+  {
+    "id": "q131",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Graceful Degrad ของ Goose (keyring เก็บ secret ไม่ได้ → FallbackToFileStorage) — หัวใจของ pattern นี้คือ?",
+    "payload": {
+      "choices": [
+        "ระบบหลักใช้ไม่ได้แล้ว ตกชั้นไปทางเลือกที่ยังใช้ได้ — พร้อม error type ที่แยกสาเหตุชัดเจน",
+        "ลองใหม่จนกว่าจะสำเร็จ",
+        "แจ้งผู้ใช้ให้แก้ปัญหาเอง",
+        "ปิดโปรแกรมทันทีเพื่อความปลอดภัย"
+      ],
+      "answer": 0
+    },
+    "explain": "สิ่งที่ทำให้ \"ตกชั้น\" นี้ดี (ไม่ใช่กลบเกลื่อนปัญหา): 1) ความสามารถลดลงแต่ระบบยังเดินได้ 2) error enum แยกว่าเก็บที่ไหน/ทำไมพลาด — ผู้ใช้ได้ฟีเจอร์ ไม่ใช่ความเงียบ — สังเกตว่ามันตรงข้ามกับ retry (ลองซ้ำ) เป็นคนละสถานการณ์",
+    "source": "Goose code review · Pattern Catalog — Graceful degradation"
+  },
+  {
+    "id": "q132",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "RAII guard (อย่าง tempfile::TempDir, KillOnDrop ที่ Goose ใช้) — ทำไมถึงปลอดภัยกว่าเรียก cleanup() เอง?",
+    "payload": {
+      "choices": [
+        "cleanup ผูกกับการ \"ตาย\" ของ object (Drop) — แม้ return เร็ว/เกิด panic ข้างบน ก็ถูกเก็บกวาดเสมอ",
+        "เร็วกว่าเพราะ OS ทำให้",
+        "กัน memory leak เท่านั้น ไม่เกี่ยวไฟล์",
+        "ไม่ต้องระบุชื่อไฟล์ตอนสร้าง"
+      ],
+      "answer": 0
+    },
+    "explain": "RAII = ทรัพยากรมีชีวิตผูกกับ object: TempDir ถูก drop เมื่อไหร่ (ออกจาก scope/panic/return) โฟลเดอร์ถูกลบทันที — เขียน cleanup() เองต้องนึกครบทุกทางออก (ทุก early return, ทุก ?) ซึ่งเผอิญลืมง่ายมาก — Rust ทำให้ \"ลืมก็ไม่พัง\"",
+    "source": "Goose code review · Pattern Catalog — RAII guard"
+  },
+  {
+    "id": "q133",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (builder แบบ SearchPaths ของ Goose)",
+    "payload": {
+      "code": "struct Paths {\n    npm: bool,\n    home: bool,\n}\nstruct PathBuilder {\n    npm: bool,\n    home: bool,\n}\nimpl Paths {\n    fn builder() -> PathBuilder {\n        PathBuilder { npm: false, home: false }\n    }\n}\nimpl PathBuilder {\n    fn with_npm(mut self) -> Self { self.npm = true; self }\n    fn with_home(mut self) -> Self { self.home = true; self }\n    fn build(self) -> Paths { Paths { npm: self.npm, home: self.home } }\n}\nfn main() {\n    let p = Paths::builder().with_home().build();\n    println!(\"{} {}\", p.npm, p.home);\n}",
+      "choices": [
+        "false true",
+        "true true",
+        "false false",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "false true"
+      }
+    },
+    "explain": "เรียกแค่ with_home() → home = true, npm คง default false — builder แยกเฟส: ประกอบค่า (builder) → ตรวจ/แปลง → build() ออกเป็นชิ้นงานจริง — ผู้ใช้เลือกแค่ที่ต้องการ ส่วนที่ไม่พูดถึงคือ default ที่ออกแบบไว้ดี",
+    "source": "Goose code review · Pattern Catalog — Builder"
+  },
+  {
+    "id": "q134",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "ทำไม Goose เขียน fluent setter เอง (with_*) แทนที่จะ derive Builder จาก crate?",
+    "payload": {
+      "choices": [
+        "ควบคุม validation/default/ลำดับได้ตรงจุด ไม่ต้องแบก dependency + พฤติกรรมของ proc-macro ภายนอก",
+        "derive Builder ใช้ไม่ได้กับ struct ที่มี String",
+        "fluent setter เร็วกว่าถึง 10 เท่า",
+        "เพราะ Rust ห้ามใช้ crate ภายนอก"
+      ],
+      "answer": 0
+    },
+    "explain": "ทุก dependency = ต้นทุน (อัพเดต, supply-chain, พฤติกรรมที่ควบคุมไม่ได้) — งานของ Goose มี validation และ default พิเศษ จึงเขียน with_* เอง 20 บรรทัดจบ อ่านได้ debug ง่าย — \"เขียนเองเมื่อต้องการความแม่นยำ ใช้ crate เมื่อปัญหา generic จริง ๆ\"",
+    "source": "บทเรียน Goose · Data Modeling — Fluent Setter"
+  },
+  {
+    "id": "q135",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "Goose ใช้ #[cfg(windows)] / #[cfg(unix)] หนาแน่นใน shell.rs — สิ่งนี้คือกลไกอะไร?",
+    "payload": {
+      "choices": [
+        "Platform abstraction — compiler เลือกโค้ดตาม OS เป้าหมายตอน build (โค้ดอีกฝั่งไม่ถูกคอมไพล์เลย)",
+        "runtime เลือก branch ตามเครื่องที่รัน",
+        "ทดสอบโค้ดสองรุ่นพร้อมกันใน CI",
+        "ทำให้ binary รันได้ทุก OS ไฟล์เดียว"
+      ],
+      "answer": 0
+    },
+    "explain": "cfg = กิ่งของต้นไม้ที่ถูกตัดตอน compile: build บน Windows ได้เฉพาะโค้ดฝั่ง windows — ไม่มีค่าใช้จ่ายรันไทม์ · แลกมาด้วยการดูแลสองทาง (cfg-garden ต้องมี comment ดี ๆ อธิบาย — Goose ทำไว้ครบตาม review)",
+    "source": "Goose code review · Pattern Catalog — Platform abstraction"
+  },
+  {
+    "id": "q136",
+    "type": "output",
+    "cat": "goose",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (ชั้นฆ่าเชื้อข้อมูล telemetry แบบ sanitize ของ Goose)",
+    "payload": {
+      "code": "fn sanitize(v: &str) -> String {\n    if v.starts_with(\"sk-\") {\n        \"***\".into()\n    } else {\n        v.to_string()\n    }\n}\nfn main() {\n    let keys = vec![\"sk-abc\", \"plain\"];\n    let out: Vec<String> = keys.iter().map(|k| sanitize(k)).collect();\n    println!(\"{:?}\", out);\n}",
+      "choices": [
+        "[\"***\", \"plain\"]",
+        "[\"sk-abc\", \"plain\"]",
+        "[\"***\", \"***\"]",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[\"***\", \"plain\"]"
+      }
+    },
+    "explain": "ค่าที่เข้าลวดลาย secret (ขึ้นต้น sk-) ถูกแปลงเป็น *** ก่อนออกจากระบบ — Goose ทำแบบ recursive ทั้ง JSON tree ก่อนส่ง telemetry — หลักคิด: ตรวจที่ **ชั้นเดียวทุกทางออก** ดีกว่านึกถึงทุกจุดที่ข้อมูลไหลผ่าน",
+    "source": "Goose code review · Pattern Catalog — Telemetry sanitization"
+  }
+]

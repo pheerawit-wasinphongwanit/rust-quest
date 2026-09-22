@@ -1,0 +1,555 @@
+[
+  {
+    "id": "q011",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "สร้าง vector เปล่าที่เพิ่มข้อมูลทีหลังได้ ใช้แบบไหน?",
+    "payload": {
+      "choices": [
+        "let mut v: Vec<i32> = Vec::new();",
+        "let v = [i32; 0];",
+        "let v = vec![i32];",
+        "let v = Vec<i32>::new"
+      ],
+      "answer": 0
+    },
+    "explain": "`Vec::new()` สร้าง vector เปล่า (capacity 0) รอ push ภายหลัง ต้องมี `mut` ถึงจะเพิ่มข้อมูลได้ · ส่วน array `[T; N]` ความยาวคงที่ตายตัว และ `vec![1, 2]` คือมาโครสร้างพร้อมข้อมูลเริ่มต้น",
+    "source": "Cookbook · Data Structures — Vec"
+  },
+  {
+    "id": "q012",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v: Vec<i32> = Vec::new();\n    v.push(10);\n    v.push(20);\n    println!(\"{}\", v.len());\n}",
+      "choices": [
+        "2",
+        "20",
+        "0",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "2"
+      }
+    },
+    "explain": "`len()` บอกจำนวนข้อมูลจริงในตอนนี้ (สองตัว) — ต่างจาก `capacity()` ที่บอกที่จองไว้ ซึ่งอาจมากกว่า len เพราะ Vec จองเผื่อล่วงหน้า",
+    "source": "Cookbook · Data Structures — Vec"
+  },
+  {
+    "id": "q013",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![1, 2, 3];\n    let last = v.pop();\n    println!(\"{:?} {:?}\", last, v);\n}",
+      "choices": [
+        "Some(3) [1, 2]",
+        "3 [1, 2]",
+        "Some(3) [1, 2, 3]",
+        "None [1, 2]"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "Some(3) [1, 2]"
+      }
+    },
+    "explain": "`pop()` ดึงตัวท้ายออกแล้วคืน `Option<T>` — มีของคืน `Some(3)` ถ้า vector ว่างคืน `None` (ไม่ panic แบบ index เกิน) — นี่คือเหตุผลที่ API แบบ \"อาจไม่มีค่า\" ใน Rust ใช้ Option เสมอ",
+    "source": "Cookbook · Data Structures — Vec"
+  },
+  {
+    "id": "q014",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "เติมเมธอดที่ขาด เพื่อใส่ค่า key-value เข้า HashMap",
+    "payload": {
+      "code": "use std::collections::HashMap;\nlet mut v: HashMap<&str, i32> = HashMap::new();\nv.___(\"a\", 1);",
+      "choices": [
+        "insert",
+        "push",
+        "set",
+        "add"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`insert(key, value)` คือคำสั่งใส่ค่าของ HashMap — ถ้า key ซ้ำจะทับของเดิมแล้วคืนค่าเก่า (Option) ส่วน push เป็นของ Vec, set/add ไม่มีใน HashMap",
+    "source": "Cookbook · Data Structures — HashMap"
+  },
+  {
+    "id": "q015",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "use std::collections::HashMap;\nfn main() {\n    let mut m = HashMap::new();\n    m.insert(\"a\", 1);\n    println!(\"{:?} {:?}\", m.get(\"a\"), m.get(\"b\"));\n}",
+      "choices": [
+        "Some(1) None",
+        "1 0",
+        "Some(1) Some(0)",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "Some(1) None"
+      }
+    },
+    "explain": "`get()` คืน `Option<&V>` — เจอคืน `Some(1)`, ไม่เจอคืน `None` (ไม่ใช่ 0 หรือ error!) เพราะ compiler บังคับให้จัดการทั้งสองกรณี — ปรัชญา \"ไม่มีค่า null หลุดรอด\" ของ Rust",
+    "source": "Cookbook · Data Structures — HashMap"
+  },
+  {
+    "id": "q016",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`*m.entry(word).or_insert(0) += 1;` ทำอะไร?",
+    "payload": {
+      "choices": [
+        "ถ้า key ยังไม่มีให้เริ่มที่ 0 แล้วบวก 1 — นับความถี่แบบบรรทัดเดียว",
+        "เพิ่ม key ใหม่เสมอ แม้มีอยู่แล้ว",
+        "ลบ key ที่มีค่า 0 แล้วบวก 1",
+        "คืน error ถ้า key ไม่มี"
+      ],
+      "answer": 0
+    },
+    "explain": "Entry API คือ idiom นับความถี่มาตรฐาน: `entry` เข้าถึงช่องของ key (มีหรือยังไม่มี), `or_insert(0)` ถ้าไม่มีให้ใส่ 0 ก่อน แล้วคืน `&mut V` ให้แก้ค่าได้ทันที — Cookbook หมวด Algorithms ใช้ pattern นี้หาคำที่พบบ่อยสุด",
+    "source": "Cookbook · Algorithms — Map & Collect"
+  },
+  {
+    "id": "q017",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "use std::collections::HashMap;\nfn main() {\n    let mut m: HashMap<&str, i32> = HashMap::new();\n    for w in [\"a\", \"b\", \"a\"] {\n        *m.entry(w).or_insert(0) += 1;\n    }\n    println!(\"{:?}\", m.get(\"a\").copied());\n}",
+      "choices": [
+        "Some(2)",
+        "Some(3)",
+        "Some(1)",
+        "None"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "Some(2)"
+      }
+    },
+    "explain": "\"a\" ปรากฏ 2 ครั้งใน array → นับได้ 2 · `get().copied()` แปลง `Option<&i32>` เป็น `Option<i32>` จึงได้ `Some(2)` — นี่คือโค้ดนับความถี่คำ (word frequency) ฉบับเต็มตาม Cookbook",
+    "source": "Cookbook · Algorithms — Map & Collect"
+  },
+  {
+    "id": "q018",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — compiler จะบอกอะไร?",
+    "payload": {
+      "code": "use std::collections::HashMap;\nfn main() {\n    let mut m: HashMap<&str, i32> = HashMap::new();\n    m.insert(\"a\", 1);\n    for (k, v) in &m {\n        m.insert(k, v + 1);\n    }\n}",
+      "choices": [
+        "error[E0502]: cannot borrow `m` as mutable because it is also borrowed as immutable",
+        "error[E0382]: borrow of moved value: `m`",
+        "error[E0499]: cannot borrow `m` as mutable more than once",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0502"
+      }
+    },
+    "explain": "E0502 — วน `for` ยืม `&m` (อ่าน) อยู่ แต่ในลูปกลับ `insert` (ยืมแบบ mutable) พร้อมกัน: Rust กันการอ่าน-เขียนพร้อมกันเพราะ insert อาจจัดสรรหน่วยความจำใหม่ทำให้ iterator เพี้ยน · ทางแก้: เก็บผลลัพธ์ไว้ใน HashMap ใหม่ หรือ collect ก่อนแล้วค่อยแก้",
+    "source": "Cookbook · Data Structures — HashMap iteration"
+  },
+  {
+    "id": "q019",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![5, 1, 4];\n    v.sort();\n    v.reverse();\n    println!(\"{:?}\", v);\n}",
+      "choices": [
+        "[5, 4, 1]",
+        "[1, 4, 5]",
+        "[5, 1, 4]",
+        "[4, 5, 1]"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[5, 4, 1]"
+      }
+    },
+    "explain": "`sort()` เรียงน้อย→มาก ได้ [1, 4, 5] แล้ว `reverse()` กลับด้านเป็นมาก→น้อย [5, 4, 1] — Cookbook มี `sort_unstable` (เร็วกว่าเล็กน้อย ไม่รักษาลำดับของตัวเท่ากัน) ให้เลือกใช้ด้วย",
+    "source": "Cookbook · Algorithms — Sort"
+  },
+  {
+    "id": "q020",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (เรียง tuple ด้วยคีย์)",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![(2, \"b\"), (1, \"a\")];\n    v.sort_by_key(|t| t.0);\n    println!(\"{:?}\", v);\n}",
+      "choices": [
+        "[(1, \"a\"), (2, \"b\")]",
+        "[(2, \"b\"), (1, \"a\")]",
+        "[a, b]",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[(1, \"a\"), (2, \"b\")]"
+      }
+    },
+    "explain": "`sort_by_key(|t| t.0)` เรียงตาม field แรกของ tuple → [(1, \"a\"), (2, \"b\")] · pattern เดียวกันใช้เรียง struct ตาม field ไหนก็ได้ เช่น sort_by_key(|s| s.priority) — เป็นพื้นฐานของ cookbook \"sort vector of structs\"",
+    "source": "Cookbook · Algorithms — Sort by key"
+  },
+  {
+    "id": "q021",
+    "type": "order",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เรียงบรรทัดให้โปรแกรมเอาตัวเลขซ้ำออก (ผลลัพธ์ [1, 2, 3])",
+    "payload": {
+      "lines": [
+        "v.sort();",
+        "fn main() {",
+        "let mut v = vec![3, 1, 2, 1];",
+        "println!(\"{:?}\", v);",
+        "v.dedup();",
+        "}"
+      ],
+      "answer": [
+        1,
+        2,
+        0,
+        4,
+        3,
+        5
+      ],
+      "verify": {
+        "kind": "orderOutput",
+        "expected": "[1, 2, 3]"
+      }
+    },
+    "explain": "ต้อง `sort()` ก่อน `dedup()` เสมอ! dedup ลบเฉพาะค่าซ้ำที่ \"ติดกัน\" — [3,1,2,1] sort เป็น [1,1,2,3] แล้ว dedup จึงได้ [1, 2, 3] · ลืม sort = ตัวซ้ำที่ไม่ติดกันรอดไป (bug คลาสสิกจาก Cookbook)",
+    "source": "Cookbook · Algorithms — Remove duplicates"
+  },
+  {
+    "id": "q022",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "`let v = vec![1, 2, 3]; println!(\"{}\", v[5]);` จะเกิดอะไรขึ้น?",
+    "payload": {
+      "choices": [
+        "panic ตอนรัน: index out of bounds",
+        "คอมไพล์ไม่ผ่าน: index เกินตั้งแต่ compile time",
+        "พิมพ์ 0",
+        "พิมพ์ค่าที่อยู่ใน memory ถัดไป (undefined behavior)"
+      ],
+      "answer": 0
+    },
+    "explain": "index ขอบเกิน = panic ทันทีตอนรัน (message: index out of bounds: the len is 3 but the index is 5) — ไม่ใช่ UB แบบ C — Rust เช็คขอบทุกครั้งที่ access ผ่าน [] · อยากปลอดภัยกว่านั้นใช้ `v.get(5)` ซึ่งคืน Option",
+    "source": "Cookbook · Data Structures — Vec access"
+  },
+  {
+    "id": "q023",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เติมเมธอดตรวจว่า vector มีเลข 2 หรือไม่",
+    "payload": {
+      "code": "let v = vec![1, 2, 3];\nlet has_two = v.___(&2);",
+      "choices": [
+        "contains",
+        "includes",
+        "has",
+        "find"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`v.contains(&2)` คืน bool — สังเกตต้องส่ง `&2` (reference) เพราะ contains รับ `&T` เพื่อไม่ยุ่งกับความเป็นเจ้าของ · includes/has เป็นชื่อภาษาอื่น (Python/Java) ใน Rust ใช้ contains",
+    "source": "Cookbook · Data Structures — Vec search"
+  },
+  {
+    "id": "q024",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let v = vec![1, 2, 3];\n    let total: i32 = v.iter().sum();\n    println!(\"{}\", total);\n}",
+      "choices": [
+        "6",
+        "123",
+        "[1, 2, 3]",
+        "คอมไพล์ไม่ผ่าน เพราะ sum ต้องระบุชนิดที่ v"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "6"
+      }
+    },
+    "explain": "`iter().sum()` รวมทุกตัวได้ 6 — ต้องประกาศชนิดให้ตัวรับ (`let total: i32`) เพราะ sum สามารถรวมได้หลายชนิด (turbofish ก็ได้: `v.iter().sum::<i32>()`)",
+    "source": "Cookbook · Algorithms — Sum"
+  },
+  {
+    "id": "q025",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (map ยกกำลัง แล้วกรองเลขคู่)",
+    "payload": {
+      "code": "fn main() {\n    let v: Vec<i32> = vec![1, 2, 3, 4]\n        .iter()\n        .map(|x| x * x)\n        .filter(|x| x % 2 == 0)\n        .collect();\n    println!(\"{:?}\", v);\n}",
+      "choices": [
+        "[4, 16]",
+        "[1, 4, 9, 16]",
+        "[2, 4]",
+        "[16]"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[4, 16]"
+      }
+    },
+    "explain": "map กำลังสองทุกตัว: 1, 4, 9, 16 → filter เหลือคู่: 4, 16 → collect เป็น Vec — iterator adapter เรียงต่อกันเป็น pipeline อ่านเหมือนประโยค (จากซ้ายไปขวา) ต่างจากการเขียน for ซ้อนกัน",
+    "source": "Cookbook · Functional — map/filter/collect"
+  },
+  {
+    "id": "q026",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`collect::<Vec<_>>()` — การเขียนแบบ turbofish (`::<_>`) มีไว้ทำอะไร?",
+    "payload": {
+      "choices": [
+        "บอก collect ให้รวมผลเป็น Vec โดยให้ compiler เดาชนิดข้างในเอง",
+        "ทำให้ collect ทำงานแบบขนาน (parallel)",
+        "ก๊อปข้อมูลกันพังทั้ง vector",
+        "แปลง Vec เป็น iterator"
+      ],
+      "answer": 0
+    },
+    "explain": "collect เป็น generic ที่รวมได้เป็นหลายชนิด (Vec, HashMap, String...) จึงต้องมีใครสักคนบอกปลายทาง — turbofish `::<Vec<_>>` ระบุที่ collect โดยตรง (`_` ให้ infer ต่อ) หรือจะประกาศชนิดที่ตัวแปรก็ได้: `let v: Vec<_> = ...`",
+    "source": "Cookbook · Functional — collect"
+  },
+  {
+    "id": "q027",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let v: Vec<i32> = vec![1, 2];\n    let out = v.iter().map(|x| x + 1).collect();\n    println!(\"{:?}\", out);\n}",
+      "choices": [
+        "error[E0283]: type annotations needed — ไม่รู้จะ collect เป็นชนิดอะไร",
+        "error[E0507]: cannot move out of `v`",
+        "error[E0382]: borrow of moved value: `v`",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0283"
+      }
+    },
+    "explain": "E0283 — `out` ไม่มี annotation และ collect เป็น generic ที่ปลายทางไม่แน่นอน compiler เดาไม่ได้ · แก้ด้วย `let out: Vec<i32> = ...` หรือ `collect::<Vec<i32>>()` — บั๊กที่เจอบ่อยมากเมื่อเริ่มใช้ iterator",
+    "source": "Cookbook · Functional — collect type annotation"
+  },
+  {
+    "id": "q028",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (enumerate คู่กับ chars)",
+    "payload": {
+      "code": "fn main() {\n    let e: Vec<(usize, char)> = \"กา\".chars().enumerate().collect();\n    println!(\"{:?}\", e);\n}",
+      "choices": [
+        "[(0, 'ก'), (1, 'า')]",
+        "[(0, \"ก\"), (1, \"า\")]",
+        "[(0, 'ก'), (3, 'า')]",
+        "คอมไพล์ไม่ผ่าน"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "[(0, 'ก'), (1, 'า')]"
+      }
+    },
+    "explain": "chars() ให้ char (single quote) ทีละตัวอักษร แล้ว enumerate ติดหมายเลข 0, 1, 2... ตามลำดับตัวอักษร (ไม่ใช่ byte) — ได้ [(0, 'ก'), (1, 'า')] · ใช้บ่อยมากกับข้อความไทยที่ byte-index ใช้ตรง ๆ ไม่ได้",
+    "source": "Cookbook · Text Processing — chars & enumerate"
+  },
+  {
+    "id": "q029",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "Vec<T> กับ [T; 3] (array) ต่างกันตรงไหน?",
+    "payload": {
+      "choices": [
+        "Vec ยืดความยาวได้ (ข้อมูลบน heap) · array ความยาวคงที่ตายตัว",
+        "Vec เก็บได้แค่ตัวเลข · array เก็บอะไรก็ได้",
+        "อาร์เรย์เร็วกว่าเพราะใช้ heap เสมอ",
+        "เหมือนกันทุกอย่าง ต่างแค่ชื่อ"
+      ],
+      "answer": 0
+    },
+    "explain": "array `[T; N]` ขนาดคงที่รู้ตอน compile เก็บในตำแหน่งที่ประกาศ (มัก stack) เหมาะข้อมูลคงที่ · Vec เป็น struct (ptr/len/cap) ชี้ไปหน่วยความจำบน heap ยืดหยุ่นได้ — เลือกใช้ตามธรรมชาติของข้อมูล",
+    "source": "พื้นฐาน syntax — Vec vs array"
+  },
+  {
+    "id": "q030",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "`Vec::with_capacity(1000)` มีประโยชน์เมื่อไหร่?",
+    "payload": {
+      "choices": [
+        "รู้ล่วงหน้าว่าจะ push ~1000 ตัว — จองที่เดียวจบ ไม่ต้องย้ายข้อมูลหลายรอบ",
+        "ทำให้ push เร็วขึ้นเป็น 2 เท่าเสมอ",
+        "ทำให้ index ไม่ต้องเช็คขอบอีกต่อไป",
+        "ลดขนาดของข้อมูลแต่ละตัวใน vector"
+      ],
+      "answer": 0
+    },
+    "explain": "Vec โตด้วยการจองใหม่+ย้ายทุกครั้งที่ capacity เต็ม (2 เท่าทีละครั้งโดยทั่วไป) — ถ้ารู้จำนวนล่วงหน้า `with_capacity` จองครั้งเดียว ตัด reallocation ทิ้งหมด · Cookbook แนะนำ pattern นี้เมื่อวนลูป push จำนวนมาก",
+    "source": "Cookbook · Data Structures — Vec capacity"
+  },
+  {
+    "id": "q031",
+    "type": "bug",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![1];\n    for x in &v {\n        v.push(*x);\n    }\n}",
+      "choices": [
+        "error[E0502]: วนอ่าน `&v` อยู่ แต่กลับ push (แก้ `v`) ระหว่างวน — ยืมสองแบบชนกัน",
+        "error[E0499]: cannot borrow as mutable more than once",
+        "error[E0382]: borrow of moved value: `v`",
+        "คอมไพล์ผ่าน แต่ลูปไม่รู้จบ"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0502"
+      }
+    },
+    "explain": "E0502 — `for x in &v` ยืมแบบอ่านทั้งลูป แต่ `v.push` ต้องยืมแบบเขียน: ต้องแก้ของที่กำลังอ่านอยู่ = ห้าม เพราะ push อาจย้ายหน่วยความจำ ทำให้ iterator อ้างที่ผิด · ทางแก้: collect สิ่งที่จะ push ไว้ก่อน จบลูปค่อย push (หรือใช้ Vec::append)",
+    "source": "พื้นฐาน borrow — modify while iterating"
+  },
+  {
+    "id": "q032",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เติม adapter ที่คัดเฉพาะค่าที่มากกว่า 1",
+    "payload": {
+      "code": "let v: Vec<i32> = vec![1, 2, 3]\n    .iter()\n    .___(|x| **x > 1)\n    .cloned()\n    .collect();",
+      "choices": [
+        "filter",
+        "map",
+        "find",
+        "where"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`filter(predicate)` คัดเฉพาะที่ closure คืน true (เหลือ [2, 3] (สังเกต ** — filter ส่ง &&i32 มาให้)) · `find` เหมือนกันแต่เอาแค่ตัวแรกแล้วหยุด (Option), `map` แปลงค่าไม่ใช่คัด, `where` ไม่มีใน Rust",
+    "source": "Cookbook · Functional — filter"
+  },
+  {
+    "id": "q033",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (สังเกตการเรียก map)",
+    "payload": {
+      "code": "fn main() {\n    let v = vec![1, 2];\n    v.iter().map(|x| {\n        println!(\"เห็น {}\", x);\n        x + 1\n    });\n    println!(\"done\");\n}",
+      "choices": [
+        "done",
+        "เห็น 1\nเห็น 2\ndone",
+        "เห็น 1\ndone",
+        "คอมไพล์ไม่ผ่าน ต้อง collect"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "output",
+        "expected": "done"
+      }
+    },
+    "explain": "iterator adapter ทั้งหลาย **ขี้เกียจ (lazy)** — map สร้าง pipeline แต่ยังไม่ทำงานจนกว่าจะมี \"consumer\" อย่าง collect/sum/for มาดึง — โค้ดนี้สร้างแล้วทิ้ง (warning: unused) จึงพิมพ์แค่ done — บั๊กเงียบ ๆ ที่ทำให้โค้ด \"ล่องหน\" ถ้าลืม consume",
+    "source": "Cookbook · Functional — lazy iterators"
+  },
+  {
+    "id": "q034",
+    "type": "mcq",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "อยากนับว่าแต่ละคำในประโยคปรากฏกี่ครั้ง — ใช้โครงสร้างข้อมูลอะไร?",
+    "payload": {
+      "choices": [
+        "HashMap<&str, usize> + entry().or_insert(0)",
+        "Vec<(String, u32)> + เขียน for หา key เอง",
+        "array ขนาด 26 ช่อง (a-z)",
+        "String เก็บคำต่อกันด้วย comma"
+      ],
+      "answer": 0
+    },
+    "explain": "นับความถี่ = งานแบบ \"key → counter\" ซึ่งเป็นสิ่งที่ HashMap เกิดมาทำ (ค้นหา O(1)) และ entry API ทำให้โค้ดสั้นและปลอด race ในตัว — Vec+for ก็ทำได้แต่ช้า (O(n) ต่อการหา) และเขียนยาว",
+    "source": "Cookbook · Algorithms — Word frequency"
+  },
+  {
+    "id": "q035",
+    "type": "order",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เรียงบรรทัดให้โปรแกรมนับคำซ้ำแล้วพิมพ์จำนวนคำที่ไม่ซ้ำ (พิมพ์ 2)",
+    "payload": {
+      "lines": [
+        "println!(\"{}\", m.len());",
+        "fn main() {",
+        "use std::collections::HashMap;",
+        "let mut m: HashMap<&str, i32> = HashMap::new();",
+        "for w in [\"x\", \"y\", \"x\"] { *m.entry(w).or_insert(0) += 1; }",
+        "}"
+      ],
+      "answer": [
+        1,
+        2,
+        3,
+        4,
+        0,
+        5
+      ],
+      "verify": {
+        "kind": "orderOutput",
+        "expected": "2"
+      }
+    },
+    "explain": "ลำดับ: เปิด main → use HashMap → สร้าง map ว่าง → วนนับความถี่ → พิมพ์จำนวน key (x, y = 2 คำไม่ซ้ำ) → ปิด brace — \"x\" ปรากฏ 2 ครั้งแต่เป็น key เดียว จึง len() = 2",
+    "source": "Cookbook · Algorithms — Map & Collect"
+  }
+]

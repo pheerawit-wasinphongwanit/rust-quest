@@ -1,0 +1,216 @@
+[
+  {
+    "id": "q001",
+    "type": "mcq",
+    "cat": "memory",
+    "diff": 1,
+    "prompt": "โค้ด `let x = 42;` — ค่า 42 ถูกเก็บไว้ที่ไหน?",
+    "payload": {
+      "choices": [
+        "บน Stack (กองซ้าย) — ขนาดคงที่ รู้ตอนคอมไพล์",
+        "บน Heap (กองขวา) — จองเองตอนรัน",
+        "ใน CPU register เท่านั้น",
+        "ฝังอยู่ในชื่อตัวแปร x"
+      ],
+      "answer": 0
+    },
+    "explain": "ตัวเลข integer ขนาดคงที่ (i32) ตอนคอมไพล์รู้ขนาดแน่นอนอยู่แล้ว → เก็บบน stack ของฟังก์ชันที่ประกาศ ใช้เสร็จคืนอัตโนมัติ (pop) เร็วมาก ส่วน Heap สงวนไว้สำหรับของที่ 'ขนาดไม่แน่นอน/ยืดหยุ่น' อย่าง String, Vec",
+    "source": "พื้นฐาน ownership — Memory Lab ฉาก 1 (ยังไม่เปิด)"
+  },
+  {
+    "id": "q002",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (คิดดี ๆ — เกี่ยวกับภาษาไทยด้วย)",
+    "payload": {
+      "code": "fn main() {\n    println!(\"{}\", \"ทารก\".len());\n}",
+      "choices": [
+        "4",
+        "12",
+        "3",
+        "8"
+      ],
+      "answer": 1,
+      "verify": {
+        "kind": "output",
+        "expected": "12"
+      }
+    },
+    "explain": "คำตอบคือ 12 — `len()` นับเป็น **byte** ไม่ใช่ตัวอักษร! ภาษาไทยแต่ละตัวอักษรใช้ 3 bytes ใน UTF-8 (ท+า+ร+ก = 4 ตัวอักษร × 3 = 12) ถ้าอยากได้ 4 ต้องใช้ `\"ทารก\".chars().count()` — บั๊กสากลที่คนไทยเจอบ่อยที่สุดใน Rust/Go/Python",
+    "source": "Cookbook · Text Processing (string เป็น UTF-8 เสมอ)"
+  },
+  {
+    "id": "q003",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "enum แบบไหนคือแบบที่ Goose ใช้ทำ 'กล่องข่าวติดป้าย' (พกข้อมูลในตัว)?",
+    "payload": {
+      "choices": [
+        "enum Mood { Happy, Tired }",
+        "enum Pet { Cat(String), Fish { count: u32 } }",
+        "enum Color { Red = 1, Green = 2 }",
+        "let x: enum = 5;"
+      ],
+      "answer": 1
+    },
+    "explain": "แบบที่ 2 คือ enum ที่แต่ละตัวเลือก 'พกข้อมูลของตัวเอง' — Cat พก String, Fish พก count — นี่แหละหัวใจของ `MessageContentBlock` ใน goose: ข้อความ/รูป/คำขอเครื่องมือ อยู่ใน enum เดียว แล้ว match บังคับให้ดูครบทุกป้าย (ลืมดู = คอมไพล์ไม่ผ่าน E0004)",
+    "source": "Goose pattern #2 Tagged Enum · บทเรียนบทที่ 2"
+  },
+  {
+    "id": "q004",
+    "type": "bug",
+    "cat": "memory",
+    "diff": 2,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — คอมไพเลอร์จะบอกอะไร?",
+    "payload": {
+      "code": "fn main() {\n    let s = String::from(\"สวัสดี\");\n    let t = s;\n    println!(\"{s}\");\n}",
+      "choices": [
+        "error[E0382]: borrow of moved value: `s`",
+        "error[E0106]: missing lifetime specifier",
+        "คอมไพล์ผ่านปกติ พิมพ์ สวัสดี",
+        "error[E0507]: cannot move out of `s`"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0382"
+      }
+    },
+    "explain": "E0382 borrow of moved value: `s` — บรรทัด `let t = s;` ไม่ได้ 'ก็อป' แต่ย้ายความเป็นเจ้าของ (move) ให้ t แล้ว s หมดอายุทันที จะใช้ต่อไม่ได้ (ป้องกันของชิ้นเดียวมีสองเจ้า) · ทางแก้: ใช้ `t` แทน, ยืม `let t = &s;` หรือก็อปจริง `s.clone()`",
+    "source": "พื้นฐาน ownership — Memory Lab ฉาก 2 (ยังไม่เปิด)"
+  },
+  {
+    "id": "q005",
+    "type": "fill",
+    "cat": "syntax",
+    "diff": 1,
+    "prompt": "เติมคำสั่งที่ขาด เพื่อเพิ่มเลข 3 เข้าท้าย vector",
+    "payload": {
+      "code": "let mut v = vec![1, 2];\nv.___((3));",
+      "choices": [
+        "push",
+        "add",
+        "append",
+        "insert_end"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fillCompiles"
+      }
+    },
+    "explain": "`v.push(3)` — push เติม 'ท้าย' vector เสมอ เป็น O(1) เฉลี่ย (พอ capacity ไม่พอมันจะโตเอง — Memory Lab ฉาก 6 ให้ดู live) · `append` ใช้กับ vector อีกตัว, `add` ไม่มีใน Vec",
+    "source": "Cookbook · Data Structures — Vec"
+  },
+  {
+    "id": "q006",
+    "type": "order",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "เรียงบรรทัดให้โปรแกรมพิมพ์ 'สวัสดี Rust' (แตะตามลำดับบน→ล่าง)",
+    "payload": {
+      "lines": [
+        "println!(\"{msg}\");",
+        "fn main() {",
+        "}",
+        "let msg = format!(\"{} {}\", \"สวัสดี\", \"Rust\");"
+      ],
+      "answer": [
+        1,
+        3,
+        0,
+        2
+      ],
+      "verify": {
+        "kind": "orderOutput",
+        "expected": "สวัสดี Rust"
+      }
+    },
+    "explain": "ลำดับที่ถูก: `fn main() {` → `let msg = format!(...)` → `println!(\"{msg}\");` → `}` — Rust ต้องประกาศตัวแปรก่อนใช้เสมอ และ format! สร้าง String จาก template ได้เหมือน println",
+    "source": "พื้นฐาน syntax — โครงโปรแกรม Rust"
+  },
+  {
+    "id": "q007",
+    "type": "memory",
+    "cat": "memory",
+    "diff": 1,
+    "prompt": "ดูแผนภาพหน่วยความจำของโค้ด `let n = 42; let s = String::from(\"สวัสดี\");` — ในกล่อง HEAP มีอะไรอยู่?",
+    "payload": {
+      "svg": "mem1",
+      "choices": [
+        "bytes ของข้อความ 'สวัสดี' (18 bytes)",
+        "ตัวแปร s ทั้งก้อน",
+        "ตัวแปร n ทั้งก้อน",
+        "ฟังก์ชัน main"
+      ],
+      "answer": 0
+    },
+    "explain": "String = 'หัว' กับ 'ตัว' แยกกัน: หัว (ptr, len, capacity) เก็บบน stack ของ main ส่วน 'ตัว' (bytes จริงของ สวัสดี = 6 code points × 3 bytes = 18) อยู่บน heap แล้วหัวชี้มาหา — เหตุผล: ขนาดข้อมูลยืดหยุ่นได้ จองตอนรัน (ตรวจจริง: \"สวัสดี\".len() = 18, chars().count() = 6)",
+    "source": "พื้นฐาน ownership — Memory Lab ฉาก 1 (ยังไม่เปิด)"
+  },
+  {
+    "id": "q008",
+    "type": "mcq",
+    "cat": "goose",
+    "diff": 1,
+    "prompt": "ในโลกของ Goose, trait เปรียบเสมือนอะไร?",
+    "payload": {
+      "choices": [
+        "แบบฟอร์มที่มีช่องให้กรอก",
+        "สัญญา/ปลั๊กมาตรฐาน — ใครจะเสียบเข้าระบบต้องมีช่องตามที่กำหนด",
+        "แม่พิมพ์ที่ปั๊มโค้ดซ้ำให้",
+        "สายพานส่งข่าวระหว่างส่วนของโปรแกรม"
+      ],
+      "answer": 1
+    },
+    "explain": "trait = สัญญา (interface) เช่น `Provider` ของ goose กำหนดว่าต้องมี name() + stream() — OpenAI/Anthropic/Google เสียบหัวปลั๊กตามสัญญาเดียวกัน โค้ดส่วนอื่นเลยเรียกผ่าน `Box<dyn Provider>` ได้โดยไม่สนยี่ห้อ · ส่วน 'แม่พิมพ์' คือ macro (#12) และ 'สายพานข่าว' คือ channel (#9)",
+    "source": "Goose pattern #5 Trait + Arc<dyn> · บทเรียนบทที่ 5"
+  },
+  {
+    "id": "q009",
+    "type": "output",
+    "cat": "syntax",
+    "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = vec![3, 1, 2];\n    v.sort();\n    println!(\"{:?}\", v);\n}",
+      "choices": [
+        "[3, 1, 2]",
+        "[1, 2, 3]",
+        "[2, 1, 3]",
+        "คอมไพล์ไม่ผ่าน เพราะ sort ต้องมี template"
+      ],
+      "answer": 1,
+      "verify": {
+        "kind": "output",
+        "expected": "[1, 2, 3]"
+      }
+    },
+    "explain": "`sort()` เรียง in-place จากน้อยไปมาก (ต้อง `mut`) ได้ `[1, 2, 3]` · `{:?}` คือ Debug print ที่เหมาะกับ vector — Cookbook หมวด Algorithms ยังมี sort แบบ key (sort_by_key), แบบ float (sort_by partial_cmp) และ shuffle แบบสุ่มด้วย",
+    "source": "Cookbook · Algorithms — Sort a Vector of Integers"
+  },
+  {
+    "id": "q010",
+    "type": "bug",
+    "cat": "goose",
+    "diff": 2,
+    "prompt": "Fluent setter ตัวนี้พัง — อาการคืออะไร?",
+    "payload": {
+      "code": "struct AgentConfig { model: String }\nimpl AgentConfig {\n    fn new(model: &str) -> Self { AgentConfig { model: model.into() } }\n    fn with_temperature(mut self, t: f32) {\n        let _ = t;\n        // ลืมอะไรบางอย่าง!\n    }\n}\nfn main() {\n    let a = AgentConfig::new(\"gpt\").with_temperature(0.5);\n    println!(\"{}\", a.model);\n}",
+      "choices": [
+        "error[E0609]: no field `model` on type `()`",
+        "error[E0382]: borrow of moved value",
+        "รันได้ปกติ ได้ gpt",
+        "error[E0046]: not all trait items implemented"
+      ],
+      "answer": 0,
+      "verify": {
+        "kind": "fails",
+        "errorCode": "E0609"
+      }
+    },
+    "explain": "E0609 no field `model` on type `()` — `with_temperature` ลืมคืน `self` จึงคืนค่าว่าง () โซ่ต่อทอยขาด: a กลายเป็น () ไม่ใช่ AgentConfig · สูตร with_* ครบ 3 จุด: `mut self` → แก้ค่า → `self` บรรทัดสุดท้าย (บทเรียนบทที่ 3)",
+    "source": "Goose pattern #3 Fluent Setter · บทเรียนบทที่ 3"
+  }
+]

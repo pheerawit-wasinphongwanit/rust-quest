@@ -33,6 +33,8 @@ Difficulty: easy→hard slope per level and across campaign (user decision 2026-
 
 Every question carries: `id, type, cat, diff (1-3), prompt (Thai), payload, explain (Thai, detailed), source (cookbook section / goose pattern # / lesson ref)`.
 
+**Bank layout (M2):** questions are authored as JSON batches in `tools/bank/b*.json` + level assignments in `tools/bank/levels.json`; `tools/assemble.mjs` concatenates them into `src/questions.js` (the engine-facing build artifact). Verify runs against the assembled file. Level sizes: L1 10 · L2 35 · L3 38 · L4 40 · L5 27 = 150.
+
 ## 4. Game systems
 
 - XP per correct (base 10 × difficulty × streak multiplier), streak counter

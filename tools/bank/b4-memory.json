@@ -1,0 +1,255 @@
+[
+  {
+    "id": "q081", "type": "mcq", "cat": "memory", "diff": 1,
+    "prompt": "Stack ใช้เก็บอะไร และทำงานอย่างไร?",
+    "payload": {
+      "choices": [
+        "ข้อมูลขนาดคงที่ (เลข, หัวของ struct) — เก็บ/เอาออกแบบจานซ้อน (LIFO) เร็วมาก",
+        "ข้อมูลทุกชนิด — จอง/คืนตามต้องการช้าหน่อย",
+        "ข้อมูลที่จะอยู่ตลอดโปรแกรม",
+        "ไฟล์และ socket เท่านั้น"
+      ],
+      "answer": 0
+    },
+    "explain": "Stack = กองจาน: ใส่ (push) เอาออก (pop) จากบนเท่านั้น รู้ขนาดล่วงหน้าจึงจัดการเป็นแค่เลื่อนตัวชี้ — เร็วสุดในหน่วยความจำ · ตัวแปรในฟังก์ชัน, พารามิเตอร์, ค่า return ใช้ stack ของแต่ละ call frame",
+    "source": "พื้นฐาน memory — stack"
+  },
+  {
+    "id": "q082", "type": "mcq", "cat": "memory", "diff": 1,
+    "prompt": "ข้อมูลแบบไหนที่ Rust ต้องเอาไปเก็บบน heap?",
+    "payload": {
+      "choices": [
+        "ข้อมูลที่ขนาดไม่แน่นอนตอน compile หรือโต/หดได้ — เช่น String, Vec",
+        "ตัวเลขทุกตัว",
+        "ตัวแปรที่ประกาศ let ทั้งหมด",
+        "เฉพาะข้อมูลที่ผู้ใช้พิมพ์เข้ามา"
+      ],
+      "answer": 0
+    },
+    "explain": "Heap = ห้องเก็บของที่จองเป็นก้อน ๆ ตอนรัน: เหมาะของที่ \"ไม่รู้ขนาดล่วงหน้า\" — String ตัวอักษรเพิ่มได้เรื่อย ๆ, Vec push ได้ไม่จำกัด — แพงกว่า stack (ต้องหาที่ว่าง+จัดการ+ชี้ต่อ) แต่ยืดหยุ่น — หัว (ตัวชี้) อยู่บน stack ชี้เข้า heap",
+    "source": "พื้นฐาน memory — heap"
+  },
+  {
+    "id": "q083", "type": "memory", "cat": "memory", "diff": 2,
+    "prompt": "ดูแผนภาพหัวใจของ String — ถ้า clone String หนึ่งอัน จะมีอะไรถูกก๊อปบ้าง?",
+    "payload": {
+      "svg": "mem3",
+      "choices": [
+        "ก๊อปทั้งหัว (ptr/len/cap) และ bytes ทั้งก้อนบน heap — เป็นก้อนใหม่อิสระ (deep copy)",
+        "ก๊อปแค่หัว — ชี้ bytes เดิมร่วมกัน",
+        "ก๊อปแค่ len กับ cap",
+        "ไม่มีอะไรถูกก๊อป — แค่เปลี่ยนชื่อ"
+      ],
+      "answer": 0
+    },
+    "explain": "clone ของ String = deep copy: สร้าง buffer ใหม่บน heap + ก๊อป bytes ทั้งหมด + หัวใหม่ชี้ไป buffer ใหม่ — สองอันแยกกันสนิท แก้อันไหนอีกอันไม่กระเทือน (ต่างจาก Arc::clone ที่แชร์ตัวเดิม — ดูข้อหลัง ๆ)",
+    "source": "พื้นฐาน memory — String clone"
+  },
+  {
+    "id": "q084", "type": "output", "cat": "memory", "diff": 1,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร?",
+    "payload": {
+      "code": "fn main() {\n    let mut v = Vec::new();\n    v.push(1);\n    v.push(2);\n    println!(\"{}\", v.len());\n}",
+      "choices": ["2", "0", "คอมไพล์ไม่ผ่าน ไม่รู้ชนิด", "ขึ้นกับ capacity ที่ได้"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "2" }
+    },
+    "explain": "push สองครั้ง len = 2 — ชนิด infer จาก push(1) ให้เป็น i32 อัตโนมัติ · (สังเกต: Vec::new() ตอนแรก capacity อาจเป็น 0 — ตัวเลข capacity เป็นรายละเอียดการจัดสรร ไม่มีผลกับความถูกต้องของโปรแกรม)",
+    "source": "พื้นฐาน memory — Vec growth"
+  },
+  {
+    "id": "q085", "type": "mcq", "cat": "memory", "diff": 3,
+    "prompt": "เมื่อ push เข้า Vec จน capacity เต็ม แล้ว push อีกตัว — เกิดอะไรขึ้นกับข้อมูลเดิมบน heap?",
+    "payload": {
+      "choices": [
+        "จองที่ใหม่ใหญ่กว่าเดิม (มัก ×2) แล้ว **ย้าย** ข้อมูลทั้งหมดไป ปล่อยที่เดิม — ที่อยู่ (address) ของข้อมูลเปลี่ยน",
+        "ต่อท้ายที่เดิมไปเรื่อย ๆ — address เดิม",
+        "ข้อมูลเก่าถูกลบ ต้อง push ใหม่",
+        "แจ้ง error ให้ผู้ใช้ขยาย capacity เอง"
+      ],
+      "answer": 0
+    },
+    "explain": "Vec โตแบบ amortized: จองใหม่ใหญ่ขึ้น (กฎ ×2 ประมาณ) ย้ายข้อมูลทั้งก้อน แล้วคืนที่เก่า — ที่อยู่ข้อมูลเปลี่ยนได้ นี่คือเหตุผลที่ **ยึด reference ของ element ไว้แล้ว push ต่อไม่ได้** (E0502) เพราะของที่ชี้อยู่อาจย้ายบ้านกลางคัน",
+    "source": "พื้นฐาน memory — Vec growth"
+  },
+  {
+    "id": "q086", "type": "output", "cat": "memory", "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (สังเกตลำดับ drop — ตัวแปรประกาศลำดับไหน)",
+    "payload": {
+      "code": "struct G(&'static str);\nimpl Drop for G {\n    fn drop(&mut self) { print!(\"[{}]\", self.0); }\n}\nfn main() {\n    let a = G(\"A\");\n    let b = G(\"B\");\n    let _ = &a;\n}",
+      "choices": ["[B][A]", "[A][B]", "[A]", "[B]"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "[B][A]" }
+    },
+    "explain": "ตอนจบ scope ตัวแปรถูก drop **ย้อนลำดับการประกาศ** (LIFO เหมือน stack): b ตายก่อน แล้ว a → พิมพ์ [B][A] — กฎเดียวกันกับ frame ของ stack เป๊ะ ๆ — การรู้ลำดับ drop สำคัญเมื่อทรัพยากรพึ่งพากัน (เช่น RAII guard ใน Goose)",
+    "source": "พื้นฐาน memory — drop order"
+  },
+  {
+    "id": "q087", "type": "output", "cat": "memory", "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (นับผู้ถือ Arc)",
+    "payload": {
+      "code": "use std::sync::Arc;\nfn main() {\n    let a = Arc::new(String::from(\"hi\"));\n    let b = Arc::clone(&a);\n    let before = Arc::strong_count(&a);\n    drop(b);\n    let after = Arc::strong_count(&a);\n    println!(\"{} {}\", before, after);\n}",
+      "choices": ["2 1", "1 1", "2 2", "คอมไพล์ไม่ผ่าน"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "2 1" }
+    },
+    "explain": "Arc = นับจำนวนผู้ถือ: สอง clone = 2 → drop หนึ่ง = 1 → ตัวสุดท้าย (1) ตายเมื่อไหร่ ข้อมูลจึงถูกคืน — เหมือนห้องพักที่เก็บกุญแจใบสุดท้ายไว้ใครคืนกุญแจคนสุดท้ายเป็นคนปิดไฟ",
+    "source": "พื้นฐาน memory — Arc refcount"
+  },
+  {
+    "id": "q088", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "Arc::clone(&a) กับ String clone ต่างกันอย่างไร?",
+    "payload": {
+      "choices": [
+        "Arc::clone ก๊อปแค่หัว+เพิ่มตัวนับ — ข้อมูลจริง **ก้อนเดิม** · String clone ก๊อปข้อมูลจริงเป็นก้อนใหม่",
+        "เหมือนกัน ทั้งคู่ deep copy",
+        "Arc::clone ก๊อปข้อมูลด้วย แต่เร็วกว่า",
+        "String clone ไม่ก๊อปอะไรเลย"
+      ],
+      "answer": 0
+    },
+    "explain": "Arc::clone ราคาแค่บวกเลขนับ (atomic) — ข้อมูลแชร์กันจริง เหมาะส่งข้าม thread โดยไม่เปลือง · String clone ต้องจอง heap ใหม่+ก๊อปทุก byte — เลือกใช้ตามความหมาย: แชร์อ่าน = Arc, ต้องแยกแก้คนละฉบับ = clone เต็ม",
+    "source": "พื้นฐาน memory — Arc vs clone"
+  },
+  {
+    "id": "q089", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "จะแชร์ข้อมูลให้หลาย thread อ่าน/แก้ร่วมกันอย่างปลอดภัย ใช้อะไร?",
+    "payload": {
+      "choices": [
+        "Arc<Mutex<T>> — Arc แชร์ความเป็นเจ้าของ + Mutex กันแก้พร้อมกัน",
+        "Rc<T> ธรรมดา — นับผู้ถือเหมือนกัน",
+        "Box<T> ส่งต่อกันไปเรื่อย ๆ",
+        "static mut — ประกาศครั้งเดียวใช้ได้ทุก thread"
+      ],
+      "answer": 0
+    },
+    "explain": "Rc นับด้วยตัวเลขธรรมดา (ไม่ thread-safe — compiler ห้ามส่งข้าม thread) · Arc คือรุ่น atomic ของ Rc ส่งข้าม thread ได้ แต่แก้ข้อมูลต้องผ่าน Mutex/RwLock กันเขียนชนกัน — คู่ Arc<Mutex<T>> คือของมาตรฐาน (เจอใน Goose ทั่ว)",
+    "source": "พื้นฐาน memory — Arc vs Rc"
+  },
+  {
+    "id": "q090", "type": "output", "cat": "memory", "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (ข้อมูลใน scope ซ้อน)",
+    "payload": {
+      "code": "fn main() {\n    let s = String::from(\"outer\");\n    {\n        let t = String::from(\"inner\");\n        println!(\"{} {}\", t.len(), s.len());\n    }\n}",
+      "choices": ["5 5", "5 0", "คอมไพล์ไม่ผ่าน s ใช้ใน scope ในไม่ได้", "คอมไพล์ผ่าน แต่ t ว่าง"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "5 5" }
+    },
+    "explain": "scope ในเข้าถึงตัวแปรของ scope นอกได้ (s มองเห็น) — t (inner, 5 ตัวอักษร) พิมพ์แล้ว **ถูก drop ทันทีตอนปิด brace** ก่อน s ที่ตายตอนจบ main — scope คือเส้นชีวิตของข้อมูลใน Rust ไม่ต้องรอ GC",
+    "source": "พื้นฐาน memory — scope & drop"
+  },
+  {
+    "id": "q091", "type": "fill", "cat": "memory", "diff": 2,
+    "prompt": "เติมชื่อฟังก์ชันเพิ่มผู้ถือ Arc อีกหนึ่งคน",
+    "payload": {
+      "code": "use std::sync::Arc;\nlet v = Arc::new(String::from(\"data\"));\nlet w = Arc::___(&v);\nprintln!(\"{}\", Arc::strong_count(&v));",
+      "choices": ["clone", "copy", "share", "new"],
+      "answer": 0,
+      "verify": { "kind": "fillCompiles" }
+    },
+    "explain": "Arc::clone(&v) — สไตล์มาตรฐานของ Arc (ชัดเจนกว่า v.clone() ตรง ๆ เพราะรู้ทันทีว่าเป็นการเพิ่มตัวนับ ไม่ใช่ deep copy) — ผลลัพธ์พิมพ์ 2 ผู้ถือ",
+    "source": "พื้นฐาน memory — Arc::clone"
+  },
+  {
+    "id": "q092", "type": "memory", "cat": "memory", "diff": 3,
+    "prompt": "ดูแผนภาพ Vec โต (capacity เต็มแล้ว push) — บล็อก heap เดิมกลายเป็นอะไร?",
+    "payload": {
+      "svg": "mem4",
+      "choices": [
+        "ถูกคืน (freed) — ข้อมูลย้ายไปบล็อกใหม่ที่ใหญ่กว่า หัวของ Vec ชี้ใหม่",
+        "ยังอยู่ — ใช้สองบล็อกพร้อมกัน",
+        "ถูกลบข้อมูลทิ้ง แต่ที่ยังจองไว้",
+        "แปลงเป็น stack อัตโนมัติ"
+      ],
+      "answer": 0
+    },
+    "explain": "เมื่อโต: จองบล็อกใหม่ (×2 โดยประมาณ) → ย้ายข้อมูลทั้งหมด → หัวเดิม (ตัวชี้) ถูกแก้ให้ชี้บล็อกใหม่ → บล็อกเก่าคืนให้ระบบ — นี่คือเหตุผลที่ reference เข้า element เก่าจะกลายเป็นชี้หาอะไรที่ไม่มีแล้ว (Rust กันไว้ตอน compile ด้วย borrow checker)",
+    "source": "พื้นฐาน memory — Vec growth"
+  },
+  {
+    "id": "q093", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "หัวของ String บน stack มี 24 bytes (ptr 8 + len 8 + cap 8) — ทำไมต้องมีค่า capacity ด้วย?",
+    "payload": {
+      "choices": [
+        "รู้ว่าเติมได้อีกกี่ bytes ก่อนต้องจองใหม่ — push_str ถึงเติมเร็วโดยไม่ย้ายทุกครั้ง",
+        "เก็บตำแหน่ง heap สำรอง",
+        "จำนวนตัวอักษรภาษาไทย",
+        "checksum กันข้อมูลเสียหาย"
+      ],
+      "answer": 0
+    },
+    "explain": "capacity = ที่จองไว้จริง, len = ที่ใช้อยู่จริง — ช่องว่าง (cap - len) คือที่ว่างเติมได้ทันทีไม่ต้องย้าย — เหตุผลเดียวกับ Vec growth: จองเผื่อทีละก้อน คุ้มค่ากว่าจองใหม่ทุกตัวอักษร",
+    "source": "พื้นฐาน memory — String head"
+  },
+  {
+    "id": "q094", "type": "output", "cat": "memory", "diff": 2,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (Box ย้ายข้อมูลขึ้น heap)",
+    "payload": {
+      "code": "fn main() {\n    let b = Box::new(7);\n    println!(\"{}\", *b + 1);\n}",
+      "choices": ["8", "7", "คอมไพล์ไม่ผ่าน ต้อง deref เองผิดที่", "พิมพ์ที่อยู่หน่วยความจำ"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "8" }
+    },
+    "explain": "Box::new(7) เก็บ 7 บน heap แล้ว b ถือตัวชี้บน stack — `*b` deref ดึงค่ามาบวกได้ 8 — Box ใช้เมื่อต้องการ \"ข้อมูลชิ้นนี้อยู่บน heap\" เช่น ค่าใหญ่มาก หรือ type ที่ไม่รู้ขนาดตอน compile (recursive type — ข้อถัดไป)",
+    "source": "พื้นฐาน memory — Box"
+  },
+  {
+    "id": "q095", "type": "mcq", "cat": "memory", "diff": 2,
+    "prompt": "ใช้ Box<T> เมื่อไหร่? (เลือกเหตุผลหลัก)",
+    "payload": {
+      "choices": [
+        "เมื่อ type มีขนาดไม่แน่นอนตอน compile (recursive type) หรือต้องการย้ายของใหญ่ขึ้น heap",
+        "เมื่ออยากให้โค้ดเร็วขึ้นเสมอ",
+        "เมื่อต้องการแชร์ข้อมูลหลายเจ้าของ",
+        "เมื่อต้องการแก้ข้อมูลจากหลาย thread"
+      ],
+      "answer": 0
+    },
+    "explain": "Box = เจ้าของคนเดียวบน heap — งานหลัก: (1) recursive type อย่าง linked list / tree ที่ไม่รู้ขนาด (2) ย้ายข้อมูลก้อนใหญ่ให้ไม่กอง stack · ส่วนแชร์หลายเจ้า = Arc, หลาย thread = Arc+Mutex — เครื่องมือคนละงาน",
+    "source": "พื้นฐาน memory — Box"
+  },
+  {
+    "id": "q096", "type": "bug", "cat": "memory", "diff": 3,
+    "prompt": "โค้ดนี้คอมไพล์ไม่ผ่าน — เพราะอะไร?",
+    "payload": {
+      "code": "enum List {\n    Cons(i32, List),\n    Nil,\n}\nfn main() {\n    let l = List::Cons(1, List::Nil);\n    let _ = l;\n}",
+      "choices": [
+        "error[E0072]: enum วนซ้ำตัวเอง (มี List ใน List) ขนาดไม่มีที่สิ้นสุด — ใส่ Box ครอบให้เหลือแค่ตัวชี้",
+        "error[E0382]: List ถูกย้าย",
+        "error[E0004]: match ไม่ครบ",
+        "คอมไพล์ผ่านปกติ"
+      ],
+      "answer": 0,
+      "verify": { "kind": "fails", "errorCode": "E0072" }
+    },
+    "explain": "E0072 recursive type has infinite size — จะหาขนาด Cons ต้องรู้ขนาด List ข้างในสืบไปเรื่อย ๆ ไม่จบ — แก้: `Cons(i32, Box<List>)` — Box เป็นตัวชี้ขนาดคงที่ 8 bytes จึงตัดวงจรได้ — นี่คือเหตุผล #1 ที่ linked structure ใน Rust เต็มไปด้วย Box",
+    "source": "พื้นฐาน memory — recursive types"
+  },
+  {
+    "id": "q097", "type": "output", "cat": "memory", "diff": 3,
+    "prompt": "โปรแกรมนี้พิมพ์อะไร? (ขนาดของค่าบน stack)",
+    "payload": {
+      "code": "use std::mem;\nfn main() {\n    println!(\"{} {} {}\", mem::size_of::<i64>(), mem::size_of::<&i64>(), mem::size_of::<String>());\n}",
+      "choices": ["8 8 24", "8 8 8", "8 4 24", "ขึ้นกับค่าที่เก็บ"],
+      "answer": 0,
+      "verify": { "kind": "output", "expected": "8 8 24" }
+    },
+    "explain": "i64 = 8 bytes · reference = ตัวชี้ 8 bytes (ชี้อะไรก็ 8) · String = หัว 3 คำ (ptr/len/cap) = 24 bytes — ขนาดเหล่านี้คงที่ตอน compile ไม่สนขนาดข้อความจริงบน heap — ส่ง String ไปฟังก์ชัน = ก๊อบ 24 bytes สั้น ๆ เท่านั้น (ไม่ใช่ก๊อบทั้งข้อความ)",
+    "source": "พื้นฐาน memory — size_of"
+  },
+  {
+    "id": "q098", "type": "mcq", "cat": "memory", "diff": 3,
+    "prompt": "ส่ง String เข้าฟังก์ชันแบบ move — ก๊อปข้อมูลเท่าไหร่?",
+    "payload": {
+      "choices": [
+        "ก๊อบแค่หัว 24 bytes (stack) — ข้อความจริงบน heap อยู่ที่เดิม ไม่แตะ",
+        "ก๊อบทุก byte ของข้อความ",
+        "ไม่ก๊อบอะไรเลย ใช้ตัวเดิมร่วมกัน",
+        "ขึ้นกับความยาวข้อความ"
+      ],
+      "answer": 0
+    },
+    "explain": "move = ส่งต่อหัว 3 คำ (24 bytes) เท่านั้น — heap ไม่ขยับ (ตัวชี้ยังชี้ก้อนเดิม) — ส่งข้อความยาวล้านตัวอักษรก็แค่ 24 bytes — นี่คือเหตุผลที่ \"ส่งค่าตรง ๆ\" ใน Rustถูกกว่าที่คิด และ clone เต็ม (deep copy) คือคนละเรื่อง",
+    "source": "พื้นฐาน memory — move cost"
+  }
+]

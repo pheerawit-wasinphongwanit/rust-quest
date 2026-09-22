@@ -7,3 +7,13 @@
 - Campaign: ด่าน 1 เปิดเล่น (10 ข้อ ง่าย→ยาก), ด่าน 2–5 แสดง preview ล็อกไว้
 - คำถาม 10 ข้อครอบคลุมทุกประเภท · 6 ข้อมีโค้ด rustc-verified (output/fail จริง)
 - tools: `verify-questions.mjs` (122 checks green), `build.mjs` → `dist/rust-quest.html` (39.7 KB)
+
+## 0.2.0 — M2 (2026-09-22)
+
+- Question bank 10 → **150** (rustc-verified: 1,826 checks green) — syntax ~40% / goose ~32% / memory ~28%
+- Bank pipeline: `tools/bank/b*.json` (8 batches) + `tools/bank/levels.json` → `tools/assemble.mjs` → `src/questions.js`
+- Campaign 8 ด่าน (10/25/25/20/18/20/18/14) — ง่าย→ยากภายในด่าน, ปลดล็อกไล่โซ่
+- **Boss Rush**: จับเวลา 2:30 · 20 ข้อสุ่มจากทั้ง bank · ตอบผิด −5 วิ · บันทึกสถิติดีสุด
+- Memory diagrams ใหม่ 3 ใบ (move / String head / Vec growth) สำหรับคำถามประเภท memory
+- `tools/smoke-test.mjs` — headless DOM-stub test รันทั้ง campaign + boss ครบวงจร (PASS)
+- GitHub Pages live: https://pheerawit-wasinphongwanit.github.io/rust-quest/
