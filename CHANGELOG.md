@@ -4,6 +4,18 @@
 
 - CI: feedback-intake workflow — new GitHub issues get `feedback` label + ack comment, owner notified via Telegram
 
+## 0.5.0 — M5 (2026-09-22)
+
+- **🪿 ใบงาน Goose (Goose Quest)** — โหมดใหม่จากเมนูหลัก: mini-project 99 ใบงาน จาก goose code review จริง (repo ปัก commit `1e83e89f5`)
+  - 9 ชั้น × 11 ใบงาน เรียงง่าย→ยาก: รู้จักโปรเจกต์ → workspace → CI/Docker/supply chain → design patterns → resource/output → security → subprocess/shell → findings/verdict → capstone
+  - ไปทำงานจริง (สำรวจ repo goose บน GitHub ที่ commit ตรึก) แล้วกลับมาพิมพ์คำตอบในเกม — ตรวจคำตอบแบบ normalize (case/วรรค/ลูกน้ำ) รับหลายรูปแบบ
+  - ไม่มี hint: ตอบผิดนับครั้ง ไม่มีการเฉลย · ตอบถูกครั้งแรกได้อ่าน "เฉลย + แนวคิด + 🛠 tools" ที่เกี่ยวข้อง พร้อม file:line จริง
+  - XP สะสม ชั้นละ 10×ชั้น (รวม 4,950 XP) เข้ากอง XP เดิม · ปลดล็อกเรียงลำดับ (ผ่าน n → เปิด n+1) · เก็บใน localStorage (`SAVE.gq`) แสดง x/99 ที่การ์ดเมนู + จอสถิติ
+- เครื่องมือใหม่: `tools/bank/goosequest.json` → `tools/assemble-gq.mjs` → `src/goosequest.js`; `tools/verify-gq.mjs` (640 checks: structural + fact-check ทุกข้อเทียบ clone goose จริงผ่าน `GOOSE_REPO=...`)
+- กันเฉลยรั่ว: verify-gq ตรวจว่าเนื้อใบงานไม่มีคำตอบฝังอยู่ (จับได้ 6 ข้อตอน author แล้วแก้หมด)
+- smoke-test ครอบ goose quest: ผิดไม่ปลดล็อก/ไม่เฉลย, ถูกได้ XP+ปลดล็อก+เฉลย, persistence ผ่าน reload
+- dist 295.1 KB (เพิ่มจาก 193.9 KB — คือเนื้อหาใบงาน 99 ข้อ 46.4 KB + โค้ดโหมด) — เกิน budget เดิม 250KB แต่ยัง single-file offline ได้ตามสเปก
+
 ## 0.1.0 — M1 (2026-09-21)
 
 - Repo scaffold (AGENTS.md, spec, tools) + push to GitHub

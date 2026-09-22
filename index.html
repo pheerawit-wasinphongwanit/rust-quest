@@ -214,6 +214,35 @@
   .lab-quiz { margin-top: 8px; border: 1px dashed var(--border); border-radius: 14px; padding: 16px 18px; }
   .lab-quiz-title { font-weight: 700; }
 
+  /* Goose Quest (M5) */
+  .gq-intro { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px;
+              margin-top: 22px; font-size: 14.5px; color: var(--text-dim); line-height: 1.8; }
+  .gq-intro b { color: var(--text); }
+  .gq-tier-head { margin: 26px 0 4px; font-size: 15px; color: var(--cyan); font-family: var(--mono); }
+  .gq-row { display: flex; align-items: center; gap: 14px; background: var(--bg-soft); border: 1px solid var(--border);
+            border-radius: 12px; padding: 12px 18px; cursor: pointer; margin: 8px 0; }
+  .gq-row:hover { border-color: var(--accent); }
+  .gq-row.locked { opacity: .45; cursor: not-allowed; }
+  .gq-row.locked:hover { border-color: var(--border); }
+  .gq-row.done { border-color: rgba(126,231,135,.4); }
+  .gq-num { font-family: var(--mono); font-weight: 700; color: var(--accent); background: var(--accent-soft);
+            border-radius: 8px; padding: 4px 10px; font-size: 13px; white-space: nowrap; }
+  .gq-row .info { flex: 1; min-width: 0; }
+  .gq-row h3 { margin: 0; font-size: 15.5px; }
+  .gq-row p { margin: 2px 0 0; font-size: 12.5px; color: var(--text-faint); font-family: var(--mono); }
+  .gq-xp { font-family: var(--mono); font-size: 12px; color: var(--amber); white-space: nowrap; }
+  .gq-card { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 16px; padding: 24px 26px; margin-top: 14px; }
+  .gq-task { font-size: 16.5px; line-height: 1.85; }
+  .gq-answer-row { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  .gq-input { flex: 1; min-width: 200px; font-family: var(--mono); font-size: 15px; color: var(--text);
+              background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; }
+  .gq-input:focus { outline: none; border-color: var(--accent); }
+  .gq-tries { font-family: var(--mono); font-size: 12.5px; color: var(--text-faint); margin-top: 10px; }
+  .gq-explain { border: 1px solid rgba(126,231,135,.5); background: rgba(126,231,135,.08); border-radius: 14px;
+                padding: 16px 20px; margin-top: 18px; font-size: 15px; line-height: 1.85; color: var(--text-dim); }
+  .gq-explain b { color: var(--text); }
+  .gq-status { font-family: var(--mono); font-size: 12px; color: var(--green); margin-top: 12px; }
+
   @media (max-width: 700px) { .lab-grid { flex-direction: column; } }
 
   @media (max-width: 560px) {
@@ -258,6 +287,12 @@
         <p>จับเวลา 2:30 นาที · 20 ข้อสุ่มรวมทุกหมวด · ตอบผิดหักเวลา −5 วินาที</p>
         <span class="best" id="boss-best">ยังไม่เคยเล่น</span>
       </div>
+      <div class="mode-card" id="go-gq">
+        <div class="ico">🪿</div>
+        <h3>ใบงาน Goose</h3>
+        <p>Mini-project 99 ด่าน จาก code review จริงของ goose · ไปทำเองแล้วมาตอบ · ไม่มี hint · ตอบถูกอ่านแนวคิด + tools</p>
+        <span class="best" id="gq-progress">0/99</span>
+      </div>
       <div class="mode-card" id="go-review">
         <div class="ico">🔁</div>
         <h3>ทบทวนข้อที่พลาด</h3>
@@ -270,7 +305,7 @@
         <p>XP · ดาว · ความแม่นยำแยกหมวด · Boss · Memory Lab</p>
       </div>
     </div>
-    <div class="home-foot" id="home-foot">v0.4.0-M4 · 150 ข้อ · 8 ด่าน · Memory Lab 7 ฉาก · แหล่งเนื้อหา: Rust Cookbook · Goose code review · เล่นออฟไลน์ได้ · เก็บความคืบหน้าในเครื่อง</div>
+    <div class="home-foot" id="home-foot">v0.5.0-M5 · 150 ข้อ · 8 ด่าน · Memory Lab 7 ฉาก · ใบงาน Goose 99 ด่าน · แหล่งเนื้อหา: Rust Cookbook · Goose code review · เล่นออฟไลน์ได้ · เก็บความคืบหน้าในเครื่อง</div>
   </div>
 </section>
 
@@ -305,6 +340,19 @@
     </div>
     <div id="lab-list"></div>
     <div id="lab-scene" style="display:none"></div>
+  </div>
+</section>
+
+<!-- ============ GOOSE QUEST ============ -->
+<section class="screen" id="screen-gq">
+  <div class="wrap">
+    <div style="margin-top:26px; display:flex; align-items:center; gap:14px;">
+      <button class="btn" id="gq-back">← หน้าแรก</button>
+      <button class="btn" id="gq-tolist" style="display:none">← รายการใบงาน</button>
+      <h2 style="margin:0;">🪿 ใบงาน Goose</h2>
+    </div>
+    <div id="gq-list"></div>
+    <div id="gq-detail" style="display:none"></div>
   </div>
 </section>
 
@@ -354,6 +402,7 @@
 <script src="src/questions.js"></script>
 <script src="src/mascots.js"></script>
 <script src="src/memorylab.js"></script>
+<script src="src/goosequest.js"></script>
 <script>
 (function () {
   "use strict";
@@ -365,8 +414,8 @@
   // ---------- save ----------
   var KEY = "rustquest.save.v1";
   function loadSave() {
-    try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.xp !== undefined) { if (!s.boss) s.boss = { best: 0, plays: 0 }; return s; } } catch (e) {}
-    return { xp: 0, streakBest: 0, levels: {}, qstats: {}, boss: { best: 0, plays: 0 } };
+    try { var s = JSON.parse(localStorage.getItem(KEY)); if (s && s.xp !== undefined) { if (!s.boss) s.boss = { best: 0, plays: 0 }; if (!s.gq) s.gq = {}; return s; } } catch (e) {}
+    return { xp: 0, streakBest: 0, levels: {}, qstats: {}, boss: { best: 0, plays: 0 }, gq: {} };
   }
   function persist() { try { localStorage.setItem(KEY, JSON.stringify(SAVE)); } catch (e) {} }
   var SAVE = loadSave();
@@ -396,6 +445,12 @@
     if (lp && window.RQ_LAB) lp.textContent = window.RQ_LAB.scenes.filter(function (s) {
       return (SAVE.lab || {})[s.id];
     }).length + "/" + window.RQ_LAB.scenes.length + " ฉาก";
+    var gp = $("gq-progress");
+    if (gp && window.RQ_GQ) {
+      var gn = 0, gk = Object.keys(SAVE.gq || {});
+      for (var gi = 0; gi < gk.length; gi++) if (SAVE.gq[gk[gi]].done) gn++;
+      gp.textContent = gn + "/" + window.RQ_GQ.tasks.length;
+    }
     var rc = $("review-count");
     if (rc) {
       var hot = reviewHotlist();
@@ -867,6 +922,128 @@
     });
   }
 
+  // ---------- Goose Quest (M5) ----------
+  var GQ = window.RQ_GQ || { tasks: [], tiers: [] };
+  var gqCur = null; // current open task id
+  function gqNorm(s) {
+    s = String(s).toLowerCase().replace(/[,]/g, " ").replace(/["'`*]/g, "");
+    return s.replace(/\s+/g, " ").trim().replace(/[.?!]+$/, "");
+  }
+  function gqTask(id) { for (var i = 0; i < GQ.tasks.length; i++) if (GQ.tasks[i].id === id) return GQ.tasks[i]; return null; }
+  function gqIsSolved(id) { return !!(SAVE.gq && SAVE.gq[id] && SAVE.gq[id].done); }
+  function gqSolvedCount() {
+    var n = 0, k = Object.keys(SAVE.gq || {});
+    for (var i = 0; i < k.length; i++) if (SAVE.gq[k[i]].done) n++;
+    return n;
+  }
+  function gqUnlocked(t) {
+    var i = GQ.tasks.indexOf(t);
+    if (i <= 0) return true;
+    return gqIsSolved(GQ.tasks[i - 1].id);
+  }
+  function gqXpFor(t) { return t.tier * 10; }
+  function gqTierName(tierId) {
+    for (var i = 0; i < (GQ.tiers || []).length; i++) if (GQ.tiers[i].id === tierId) return GQ.tiers[i].name;
+    return "Tier " + tierId;
+  }
+  function gqXpTotal() {
+    var sum = 0, k = Object.keys(SAVE.gq || {});
+    for (var i = 0; i < k.length; i++) if (SAVE.gq[k[i]].done) sum += SAVE.gq[k[i]].xp || 0;
+    return sum;
+  }
+  function renderGq() {
+    var list = $("gq-list");
+    var html = '<div class="gq-intro">ใบงาน 99 ข้อ ย่อมาจาก <b>code review จริง</b>ของ <a href="' + esc(GQ.repo || "") +
+      '/tree/' + esc(GQ.commit || "") + '" target="_blank" rel="noopener">repo goose @ commit ' + esc((GQ.commit || "").slice(0, 7)) +
+      '</a> — ทำเป็น mini-project: <b>อ่าน/สำรวจ repo จริง แล้วกลับมาพิมพ์คำตอบสั้น ๆ ในช่องตอบ</b> · เรียงง่าย→ยาก 9 ชั้น · ไม่มี hint — ผิดกี่ครั้งก็ได้ ตอบถูกจะเห็นแนวคิด + tools ที่เกี่ยวข้อง และปลดล็อกใบงานถัดไป · คำตอบส่วนใหญ่เป็นชื่อไฟล์/ตัวเลข/คำสั่ง (ภาษาอังกฤษ เขียนตรง ๆ ไม่ต้องมีคำอธิบาย)</div>';
+    var curTier = 0;
+    GQ.tasks.forEach(function (t) {
+      if (t.tier !== curTier) {
+        curTier = t.tier;
+        html += '<div class="gq-tier-head">ชั้น ' + curTier + "/9 · " + esc(gqTierName(curTier)) + "</div>";
+      }
+      var solved = gqIsSolved(t.id), open = gqUnlocked(t);
+      var cls = "gq-row" + (solved ? " done" : open ? "" : " locked");
+      var mark = solved ? "✅" : open ? "▶" : "🔒";
+      var right = solved ? '<span class="gq-xp">+' + gqXpFor(t) + " XP</span>" :
+        (open ? '<span class="gq-xp" style="color:var(--text-faint)">+' + gqXpFor(t) + " XP</span>" : "");
+      html += '<div class="' + cls + '" data-gq="' + t.id + '"><span>' + mark +
+        '</span><span class="gq-num">' + t.id + '</span><div class="info"><h3>' + esc(t.title) +
+        "</h3><p>ชั้น " + t.tier + " · " + esc(gqTierName(t.tier)) + "</p></div>" + right + "</div>";
+    });
+    list.innerHTML = html;
+    qsa(list, ".gq-row").forEach(function (row) {
+      var t = gqTask(row.getAttribute("data-gq"));
+      if (gqUnlocked(t)) row.onclick = function () { gqOpenTask(t.id); };
+    });
+    $("gq-list").style.display = "block";
+    $("gq-detail").style.display = "none";
+    $("gq-tolist").style.display = "none";
+  }
+  function gqOpenTask(id) {
+    var t = gqTask(id); if (!t) return;
+    gqCur = id;
+    var solved = gqIsSolved(id);
+    var html = '<div class="q-meta" style="margin-top:22px"><span>' + t.id + '</span><span class="cat">ชั้น ' +
+      t.tier + "/9 · " + esc(gqTierName(t.tier)) + '</span><span class="diff">+' + gqXpFor(t) + " XP</span></div>" +
+      '<div class="gq-card"><h3 style="margin:0 0 10px">' + esc(t.title) + '</h3><div class="gq-task">' + t.task + "</div>";
+    if (solved) {
+      var rec = SAVE.gq[id];
+      html += '<div class="gq-status">✅ ผ่านแล้ว — +' + rec.xp + " XP · ตอบผิดมาก่อน " + Math.max(0, rec.tries - 1) + ' ครั้ง</div>' +
+        '<div class="gq-explain"><b>📖 เฉลย + แนวคิด</b><br>' + t.explain + "</div>";
+    } else {
+      html += '<div class="gq-answer-row"><input class="gq-input" id="gq-input" autocomplete="off" ' +
+        'placeholder="พิมพ์คำตอบสั้น ๆ แล้วกดตอบ" ><button class="btn primary" id="gq-submit">ส่งคำตอบ</button></div>' +
+        '<div class="gq-tries" id="gq-tries">ไม่มี hint — คิดเอง ตรวจเองจาก repo จริง</div>';
+    }
+    html += '<div style="margin-top:18px; display:flex; gap:12px;">' +
+      (solved && gqTask("GQ-" + (parseInt(t.id.slice(3), 10) + 1))
+        ? '<button class="btn primary" id="gq-next">ใบงานถัดไป →</button>' : "") + "</div>";
+    html += "</div>";
+    var d = $("gq-detail");
+    d.innerHTML = html;
+    d.style.display = "block";
+    $("gq-list").style.display = "none";
+    $("gq-tolist").style.display = "inline-block";
+    var inp = $("gq-input");
+    if (inp) {
+      inp.focus();
+      inp.onkeydown = function (e) { if ((e.keyCode || e.which) === 13) gqSubmit(); };
+      $("gq-submit").onclick = gqSubmit;
+    }
+    var nx = $("gq-next");
+    if (nx) nx.onclick = function () {
+      var n = parseInt(gqCur.slice(3), 10) + 1;
+      gqOpenTask("GQ-" + (n < 10 ? "00" + n : n < 100 ? "0" + n : n));
+    };
+  }
+  function gqSubmit() {
+    if (!gqCur || gqIsSolved(gqCur)) return;
+    var t = gqTask(gqCur);
+    var v = gqNorm($("gq-input").value || "");
+    if (!v) { toast("พิมพ์คำตอบก่อนนะ"); return; }
+    var hit = false;
+    for (var i = 0; i < t.answers.length; i++) if (gqNorm(t.answers[i]) === v) { hit = true; break; }
+    var rec = SAVE.gq[gqCur] || { done: false, tries: 0, xp: 0 };
+    rec.tries++;
+    if (!hit) {
+      SAVE.gq[gqCur] = rec; persist();
+      var tr = $("gq-tries");
+      if (tr) tr.textContent = "❌ ยังไม่ถูก — ลองครั้งที่ " + rec.tries + " · ไม่มี hint กลับไปดู repo อีกทีแล้วค่อยตอบ";
+      toast("ยังไม่ถูก — ลองอีกครั้งหลังกลับไปทำการบ้าน");
+      $("gq-input").value = "";
+      return;
+    }
+    rec.xp = gqXpFor(t);
+    rec.done = true;
+    SAVE.gq[gqCur] = rec;
+    SAVE.xp += rec.xp;
+    persist();
+    gqOpenTask(gqCur); // re-render as solved with explanation
+    refreshHud();
+    toast("✅ ถูกต้อง! +" + rec.xp + " XP — ปลดล็อกใบงานถัดไป");
+  }
+
   // ---------- stats screen ----------
   function renderStats() {
     var body = $("stats-body");
@@ -884,6 +1061,7 @@
     var catNames = { syntax: "ไวยากรณ์/มาตรฐาน", goose: "Goose patterns", memory: "หน่วยความจำ/ownership" };
     var html = '<div class="stats-grid">' +
       '<div class="stat-box"><div class="v">' + SAVE.xp + '</div><div class="l">XP รวม</div></div>' +
+      '<div class="stat-box"><div class="v">🪿 ' + gqSolvedCount() + '/99</div><div class="l">ใบงาน Goose (+' + gqXpTotal() + ' XP)</div></div>' +
       '<div class="stat-box"><div class="v">' + stars + '★</div><div class="l">ดาวรวม (สูงสุด ' + LEVELS.length * 3 + ')</div></div>' +
       '<div class="stat-box"><div class="v">🔥 ' + SAVE.streakBest + '</div><div class="l">streak สูงสุด</div></div>' +
       '<div class="stat-box"><div class="v">' + (SAVE.boss.best || 0) + '/20</div><div class="l">Boss Rush สถิติดีสุด (เล่น ' + (SAVE.boss.plays || 0) + ' ครั้ง)</div></div>' +
@@ -912,6 +1090,9 @@
   $("go-boss").onclick = function () { startBoss(); };
   $("go-review").onclick = function () { startReview(); };
   $("go-stats").onclick = function () { renderStats(); show("screen-stats"); };
+  $("go-gq").onclick = function () { if (!window.RQ_GQ || !GQ.tasks.length) { toast("ใบงาน Goose ยังไม่พร้อม"); return; } renderGq(); show("screen-gq"); };
+  $("gq-back").onclick = function () { show("screen-home"); };
+  $("gq-tolist").onclick = function () { renderGq(); };
   $("stats-back").onclick = function () { show("screen-home"); };
   $("go-lab").onclick = function () { if (window.RQ_LAB) window.RQ_LAB.open(); else toast("Memory Lab ยังไม่พร้อม"); };
   $("lab-back").onclick = function () { show("screen-home"); };
@@ -952,6 +1133,8 @@
   window.RQ_ENGINE = {
     startLevel: startLevel, startBoss: startBoss, nextQuestion: nextQuestion,
     startReview: startReview, renderStats: renderStats,
+    gqRender: renderGq, gqOpenTask: gqOpenTask, gqSubmit: gqSubmit,
+    gqNorm: gqNorm, gqIsSolved: gqIsSolved, gqUnlocked: function (id) { return gqUnlocked(gqTask(id)); },
     show: show, persist: persist,
     getSave: function () { return SAVE; }
   };

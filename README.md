@@ -12,15 +12,24 @@
 
 | โหมด | สถานะ | คำอธิบาย |
 |---|---|---|
-| 🗺️ Campaign | ✅ M1 เปิดด่าน 1 | ไล่ด่านตามหมวด ง่าย→ยาก เก็บดาว/XP/streak |
-| 🧠 Memory Lab | 🔜 M3 | ดู stack/heap มีชีวิต ตอนโค้ดรันทีละบรรทัด |
-| ⚔️ Boss Rush | 🔜 M2 | จับเวลา สุ่มรวมทุกหมวด |
+| 🗺️ Campaign | ✅ M2 — 150 ข้อ 8 ด่าน | ไล่ด่านตามหมวด ง่าย→ยาก เก็บดาว/XP/streak |
+| 🧠 Memory Lab | ✅ M3 — 7 ฉาก | ดู stack/heap มีชีวิต ตอนโค้ดรันทีละบรรทัด |
+| ⚔️ Boss Rush | ✅ M2 | จับเวลา 2:30 สุ่มรวมทุกหมวด |
+| 🪿 ใบงาน Goose | ✅ M5 — 99 ใบงาน | Mini-project จาก goose code review จริง: ไปสำรวจ repo แล้วกลับมาตอบ · ไม่มี hint · ตอบถูกอ่านแนวคิด + tools |
+| 🔁 ทบทวนข้อที่พลาด | ✅ M4 | รวบข้อที่ตอบผิดบ่อยมาซ้อม (hotlist) |
+| 📊 สถิติ | ✅ M4 | XP · ดาว · ความแม่นยำแยกหมวด · Boss · Lab |
 
 ## พัฒนา (M1)
 
 ```bash
 # ตรวจคลังคำถาม (structural + rustc จริงทุกข้อที่มีโค้ด) — release gate
 node tools/verify-questions.mjs
+
+# ตรวจใบงาน Goose 99 ข้อ (structural + fact-check เทียบ clone goose จริง)
+GOOSE_REPO=/path/to/goose node tools/verify-gq.mjs
+
+# สร้าง src/goosequest.js ใหม่หลังแก้ tools/bank/goosequest.json
+node tools/assemble-gq.mjs
 
 # build ไฟล์เดี่ยวสำหรับส่งมอบ
 node tools/build.mjs   # → dist/rust-quest.html

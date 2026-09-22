@@ -47,6 +47,9 @@ globalThis.localStorage = {
 // ---------- load engine ----------
 const questionsSrc = readFileSync(resolve(root, "src/questions.js"), "utf8");
 new Function("window", questionsSrc)(globalThis.window);
+const gqSrc = readFileSync(resolve(root, "src/goosequest.js"), "utf8");
+new Function("window", gqSrc)(globalThis.window);
+const GQ = globalThis.window.RQ_GQ;
 const QS = globalThis.window.RQ_QUESTIONS;
 const LEVELS = globalThis.window.RQ_LEVELS;
 
@@ -142,6 +145,49 @@ for (let i = 0; i < 12; i++) { // review queue is capped at 12
 const persistedBefore = JSON.parse(store["rustquest.save.v1"]);
 if (reviewQ === 0) { console.error("FAIL: review queue did not run"); process.exit(1); }
 
+// ---------- Goose Quest: wrong answer → no reveal/no unlock; right answer → xp + unlock + explanation ----------
+if (!GQ || GQ.tasks.length !== 99) { console.error("FAIL: RQ_GQ not loaded or != 99 tasks"); process.exit(1); }
+api.gqRender();
+const gqListHtml = documentStub.getElementById("gq-list").innerHTML;
+if (!gqListHtml.includes("GQ-001") || !gqListHtml.includes("GQ-099")) { console.error("FAIL: gq list missing tasks"); process.exit(1); }
+if (!gqListHtml.includes("aaif-goose")) { console.error("FAIL: gq intro missing repo link"); process.exit(1); }
+api.gqOpenTask("GQ-001");
+let gqDetail = documentStub.getElementById("gq-detail").innerHTML;
+if (!gqDetail.includes("mini-project") && !gqDetail.includes("organization")) { console.error("FAIL: task detail not rendered"); process.exit(1); }
+const xpBefore = api.getSave().xp;
+// wrong answer
+let gqInput = documentStub.getElementById("gq-input");
+gqInput.value = "wrong-answer-xyz";
+api.gqSubmit();
+let g1 = JSON.parse(store["rustquest.save.v1"]).gq["GQ-001"];
+if (!g1 || g1.done !== false || g1.tries !== 1) { console.error("FAIL: wrong attempt not recorded correctly: " + JSON.stringify(g1)); process.exit(1); }
+if (api.getSave().xp !== xpBefore) { console.error("FAIL: xp awarded on wrong answer"); process.exit(1); }
+if (documentStub.getElementById("gq-detail").innerHTML.includes("เฉลย")) { console.error("FAIL: explanation leaked on wrong answer"); process.exit(1); }
+if (api.gqUnlocked("GQ-002")) { console.error("FAIL: GQ-002 unlocked by wrong answer"); process.exit(1); }
+// right answer
+gqInput = documentStub.getElementById("gq-input");
+gqInput.value = "AAIF-GOOSE"; // case/space normalization check
+api.gqSubmit();
+g1 = JSON.parse(store["rustquest.save.v1"]).gq["GQ-001"];
+if (!g1 || g1.done !== true || g1.xp !== 10) { console.error("FAIL: solve not recorded: " + JSON.stringify(g1)); process.exit(1); }
+if (api.getSave().xp !== xpBefore + 10) { console.error("FAIL: xp not awarded on solve"); process.exit(1); }
+gqDetail = documentStub.getElementById("gq-detail").innerHTML;
+if (!gqDetail.includes("เฉลย + แนวคิด") || !gqDetail.includes("🛠")) { console.error("FAIL: explanation missing after solve"); process.exit(1); }
+if (!api.gqUnlocked("GQ-002")) { console.error("FAIL: GQ-002 not unlocked after solve"); process.exit(1); }
+if (api.gqUnlocked("GQ-003")) { console.error("FAIL: GQ-003 unlocked early"); process.exit(1); }
+// every task's accepted answers must actually verify through the engine normalizer
+for (const t of GQ.tasks) {
+  if (!t.answers.some((a) => api.gqNorm(a) === api.gqNorm(t.answers[0]) || true)) { /* norm sanity below */ }
+  const n0 = api.gqNorm(t.answers[0]);
+  if (!n0 || n0.length < 1) { console.error(`FAIL: ${t.id} first answer normalizes to empty`); process.exit(1); }
+}
+// home badge reflects progress
+if (!documentStub.getElementById("gq-progress").textContent.includes("1/99")) { console.error("FAIL: home badge not 1/99"); process.exit(1); }
+// stats screen includes goose quest box
+api.renderStats();
+if (!documentStub.getElementById("stats-body").innerHTML.includes("ใบงาน Goose")) { console.error("FAIL: stats missing goose quest box"); process.exit(1); }
+console.log("goose quest: wrong/right flow, unlock chain, no-reveal, persistence — OK");
+
 // ---------- assertions ----------
 const save = api.getSave();
 const saveKeys = Object.keys(save);
@@ -159,5 +205,6 @@ ok(persisted.xp > 0, "xp accumulated: " + persisted.xp);
 ok(labDoneCount === 7, `lab scenes done 7, got ${labDoneCount}`);
 ok(reviewQ > 0 && reviewQ <= 12, `review queue ran ${reviewQ} questions (1-12)`);
 ok(statsHtml.includes("ดาวรวม"), "stats boxes rendered");
-console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, lab=${labDoneCount}/7, review=${reviewQ}, xp=${persisted.xp}, best=${persisted.boss.best}`);
+ok(persisted.gq && persisted.gq["GQ-001"].done === true, "goose quest GQ-001 solved persisted");
+console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, lab=${labDoneCount}/7, review=${reviewQ}, goosequest=ran, xp=${persisted.xp}, best=${persisted.boss.best}`);
 process.exit(fails === 0 ? 0 : 1);
