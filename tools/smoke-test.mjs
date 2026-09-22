@@ -10,7 +10,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 // ---------- DOM stub ----------
 function makeEl(id) {
   const el = {
-    id, style: {}, children: [], textContent: "", innerHTML: "", value: "",
+    id, style: {}, children: [], textContent: "", _html: "", value: "",
     disabled: false, className: "", onclick: null,
     classList: { add() {}, remove() {}, contains() { return false; } },
     appendChild(c) { this.children.push(c); return c; },
@@ -18,6 +18,11 @@ function makeEl(id) {
     addEventListener() {}, focus() {}, click() { if (this.onclick) this.onclick(); },
     setAttribute() {}
   };
+  // mimic real DOM: assigning innerHTML discards existing children
+  Object.defineProperty(el, "innerHTML", {
+    get() { return this._html; },
+    set(v) { this._html = v; this.children = []; }
+  });
   return el;
 }
 const registry = new Map();
@@ -61,15 +66,27 @@ function clickables(el, out) {
   }
   return out;
 }
+// stub-DOM limitation: innerHTML can't build element hierarchy, so some
+// interactive hosts (order-pool, lab quiz) live only in the id registry.
+function answerCurrent() {
+  const card = documentStub.getElementById("q-card");
+  for (const c of clickables(card, [])) {
+    if (fbShown()) return true;
+    c.click();
+  }
+  for (const hostId of ["ord-pool"]) {
+    const host = registry.get(hostId);
+    if (host) for (const c of clickables(host, [])) {
+      if (fbShown()) return true;
+      c.click();
+    }
+  }
+  return fbShown();
+}
 for (const lvl of LEVELS) {
   api.startLevel(lvl);
   for (let i = 0; i < lvl.questions.length; i++) {
-    const card = documentStub.getElementById("q-card");
-    for (const c of clickables(card, [])) {
-      if (fbShown()) break;
-      c.click();
-    }
-    if (!fbShown()) { console.error(`FAIL: question did not produce feedback: level ${lvl.id} #${i + 1}`); process.exit(1); }
+    if (!answerCurrent()) { console.error(`FAIL: question did not produce feedback: level ${lvl.id} #${i + 1}`); process.exit(1); }
     answered++;
     documentStub.getElementById("btn-next").click();
   }
@@ -79,13 +96,34 @@ if (answered !== QS.length) { console.error(`FAIL: answered ${answered} !== ${QS
 // ---------- run Boss Rush ----------
 api.startBoss();
 for (let i = 0; i < 20; i++) {
-  const card = documentStub.getElementById("q-card");
-  for (const c of clickables(card, [])) {
-    if (fbShown()) break;
-    c.click();
-  }
+  answerCurrent();
   documentStub.getElementById("btn-next").click();
 }
+
+// ---------- Memory Lab: walk every scene, answer every quiz ----------
+const labSrc = readFileSync(resolve(root, "src/memorylab.js"), "utf8");
+new Function("document", "window", labSrc)(documentStub, globalThis.window);
+const LAB = globalThis.window.RQ_LAB;
+if (!LAB || LAB.scenes.length !== 7) { console.error("FAIL: lab not loaded or wrong scene count"); process.exit(1); }
+LAB.open();
+for (const sc of LAB.scenes) {
+  LAB._startScene(sc);
+  const steps = sc.steps.length;
+  for (let i = 0; i < steps - 1; i++) documentStub.getElementById("lab-next").click();
+  // at last step the quiz renders; find correct choice via RQ_QUESTIONS
+  const q = QS.find(x => x.id === sc.quiz);
+  const btns = documentStub.getElementById("lab-quiz-choices").children;
+  if (btns.length !== 4) { console.error(`FAIL: scene ${sc.id} quiz choices missing`); process.exit(1); }
+  btns[q.payload.answer].click();
+  const c = LAB._getCur();
+  if (!c || !c.quizDone) { console.error(`FAIL: scene ${sc.id} quiz not completed`); process.exit(1); }
+  // click "กลับหน้าฉาก" (last child of fb)
+  const fbKids = documentStub.getElementById("lab-quiz-fb").children;
+  fbKids[fbKids.length - 1].click();
+  const sv = api.getSave();
+  if (!sv.lab || !sv.lab[sc.id]) { console.error(`FAIL: scene ${sc.id} not marked done`); process.exit(1); }
+}
+const labDoneCount = Object.keys(api.getSave().lab).length;
 
 // ---------- assertions ----------
 const save = api.getSave();
@@ -101,5 +139,6 @@ ok(levelsWithStars.length === LEVELS.length, `all ${LEVELS.length} campaign leve
 const seenTotal = Object.values(persisted.qstats).reduce((a, s) => a + s.seen, 0);
 ok(seenTotal >= QS.length, `qstats seen total ${seenTotal} >= ${QS.length}`);
 ok(persisted.xp > 0, "xp accumulated: " + persisted.xp);
-console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, xp=${persisted.xp}, best=${persisted.boss.best}`);
+ok(labDoneCount === 7, `lab scenes done 7, got ${labDoneCount}`);
+console.log(`\nSMOKE ${fails === 0 ? "PASS" : "FAIL"} — levels=${LEVELS.length}, questions=${QS.length}, answered=${answered}, boss=ran, lab=${labDoneCount}/7, xp=${persisted.xp}, best=${persisted.boss.best}`);
 process.exit(fails === 0 ? 0 : 1);

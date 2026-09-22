@@ -17,3 +17,11 @@
 - Memory diagrams ใหม่ 3 ใบ (move / String head / Vec growth) สำหรับคำถามประเภท memory
 - `tools/smoke-test.mjs` — headless DOM-stub test รันทั้ง campaign + boss ครบวงจร (PASS)
 - GitHub Pages live: https://pheerawit-wasinphongwanit.github.io/rust-quest/
+
+## 0.3.0 — M3 (2026-09-22)
+
+- **Memory Lab** — 7 interactive scenes: stack/heap, move, borrow &, &mut, clone, Vec growth, Arc+channel
+- Code stepper ซ้าย (ไลน์ active ไฮไลต์) + live stack/heap SVG panel ขวา (declarative state renderer ใน src/memorylab.js)
+- Mini-quiz ท้ายฉาก (ดึงจาก bank เดิม) — ตอบถูกเก็บฉาก บันทึกใน SAVE.lab, หน้าแรกแสดงความคืบหน้า x/7
+- build.mjs: inline ทุก <script src="src/..."> (questions + memorylab) → dist 193.9 KB
+- smoke-test ขยายครอบ lab 7 ฉาก (PASS), render QC ผ่าน (SVG panel + arrows)
