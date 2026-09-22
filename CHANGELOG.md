@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- CI: feedback-intake workflow — new GitHub issues get `feedback` label + ack comment, owner notified via Telegram
+
 ## 0.1.0 — M1 (2026-09-21)
 
 - Repo scaffold (AGENTS.md, spec, tools) + push to GitHub
